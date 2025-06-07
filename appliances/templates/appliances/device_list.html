@@ -23,40 +23,44 @@
         {% endif %}
         
         <!-- नयाँ डिभाइस थप्ने फारम -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3>Add New Device</h3>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}  <!-- सुरक्षा टोकन: Django मा सुरक्षित POST को लागि -->
-                    <div class="row">
-                        <!-- फारमको नाम फिल्ड -->
-                        <div class="col-md-4">
-                            {{ form.name.label_tag }}
-                            {{ form.name }}
-                        </div>
-
-                        <!-- फारमको location फिल्ड -->
-                        <div class="col-md-4">
-                            {{ form.location.label_tag }}
-                            {{ form.location }}
-                        </div>
-
-                        <!-- फारमको status (ON/OFF) फिल्ड -->
-                        <div class="col-md-2">
-                            {{ form.status.label_tag }}
-                            {{ form.status }}
-                        </div>
-
-                        <!-- फारम submit गर्ने बटन -->
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary mt-4">Add Device</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Add New Device</h3>
         </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        {{ form.name.label_tag }}
+                        {{ form.name }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.location.label_tag }}
+                        {{ form.location }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ form.status.label_tag }}
+                        {{ form.status }}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        {{ form.room.label_tag }}
+                        {{ form.room }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.user.label_tag }}
+                        {{ form.user }}
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">Add Device</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
         
         <!-- डिभाइसहरूको सूची देखाउने भाग -->
         <div class="card">
@@ -73,6 +77,10 @@
                                     <th>Device Name</th>
                                     <th>Location</th>
                                     <th>Status</th>
+                                    <th>Status</th>
+                                    <th>Status</th>
+                                    <th>Edit</th>
+                                    <th>Delete</th>
                                                                </tr>
                             </thead>
                             <tbody>
@@ -86,6 +94,11 @@
                                             {{ device.status|yesno:'ON,OFF' }}
                                         </span>
                                     </td>
+                                    <td>{{ device.room.name }}</td>
+                                   <td>{{ device.user.username }}</td>
+                                   <td>
+                                    <a class="badge bg-success " href="{% url 'appliance_edit' device.id %}">Edit</a></td>
+                                    <td><a class="badge bg-warning " href="{% url 'appliance_delete' device.id %}">Delete</a></td>
                                                                    </tr>
                                 {% endfor %}
                             </tbody>

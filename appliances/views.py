@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from .forms import ApplianceForm
 from .models import Appliance
@@ -24,3 +24,17 @@ def appliance_list(request):
         'total_devices': appliances.count()
     }
     return render(request, 'appliances/device_list.html', context)  # Template र context पठाउने
+def appliance_edit(request, pk):
+    appliance = get_object_or_404(Appliance, pk=pk)
+    form = ApplianceForm(request.POST or None, instance=appliance)
+    if form.is_valid():
+        form.save()
+        return redirect('appliance_list')
+    return render(request, 'appliances/device_form.html', {'form': form})
+
+def appliance_delete(request, pk):
+    appliance = get_object_or_404(Appliance, pk=pk)
+    if request.method == 'POST':
+        appliance.delete()
+        return redirect('appliance_list')
+    return render(request, 'appliances/device_confirm_delete.html', {'appliance': appliance})
