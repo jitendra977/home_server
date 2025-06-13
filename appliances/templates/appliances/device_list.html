@@ -1,117 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Smart Device Manager - Devices{% endblock %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Smart Device Manager</title>
+{% block page_title %}Device Management{% endblock %}
 
-    <!-- Bootstrap CSS जोडिएको छ ताकि डिजाइन राम्ररी देखियोस् -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+{% block page_subtitle %}Monitor and control all your connected smart devices{% endblock %}
 
-    <!-- मुख्य कन्टेनर सुरू हुन्छ -->
-    <div class="container mt-4">
-        <h1 class="mb-4">Smart Device Management</h1>
-        
-        <!-- यदि सन्देश छ भने (Success/Error message देखाउन) -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-        
-       <!-- नयाँ डिभाइस थप्ने फारम -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>Add New Device</h3>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        {{ form.name.label_tag }}
-                        {{ form.name }}
-                    </div>
-                    <div class="col-md-4">
-                        {{ form.location.label_tag }}
-                        {{ form.location }}
-                    </div>
-                    <div class="col-md-2">
-                        {{ form.status.label_tag }}
-                        {{ form.status }}
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        {{ form.room.label_tag }}
-                        {{ form.room }}
-                    </div>
-                    <div class="col-md-4">
-                        {{ form.user.label_tag }}
-                        {{ form.user }}
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary">Add Device</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-        
-        <!-- डिभाइसहरूको सूची देखाउने भाग -->
-        <div class="card">
-            <div class="card-header">
-                <h3>Your Devices ({{ total_devices }})</h3>  <!-- कूल कति डिभाइस छन् देखाउने -->
+{% block header_stats %}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in">
+    <div class="glass p-4 rounded-xl border border-white/20 dark:border-gray-700/50">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-microchip text-white"></i>
             </div>
-            <div class="card-body">
-                {% if appliances %}
-                    <!-- यदि डिभाइस छन् भने table देखाइन्छ -->
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Device Name</th>
-                                    <th>Location</th>
-                                    <th>Status</th>
-                                    <th>Edit</th>
-                                    <th>Delete</th>
-                                                               </tr>
-                            </thead>
-                            <tbody>
-                                {% for device in appliances %}
-                                <tr>
-                                    <td>{{ device.name }}</td>
-                                    <td>{{ device.location }}</td>
-                                    <td>
-                                        <!-- यदि status True छ भने 'ON', नभए 'OFF' -->
-                                        <span class="badge {% if device.status %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {{ device.status|yesno:'ON,OFF' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                      <a href="{% url 'appliance_edit' device.id %}" class="btn btn-sm btn-primary">Edit</a>
-                                    </td>
-                                    <td>
- <a href="{% url 'appliance_delete' device.id %}" class="btn btn-sm btn-danger">Edit</a></td>
-                                                                   </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <!-- कुनै डिभाइस नभए सन्देश देखाइन्छ -->
-                    <p class="text-muted">No devices added yet. Add your first device above!</p>
-                {% endif %}
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_devices|default:0 }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Total Devices</p>
             </div>
         </div>
     </div>
     
-    <!-- Bootstrap को JavaScript जोडिएको छ (alert बन्द गर्न आदि को लागि) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div class="glass p-4 rounded-xl border border-white/20 dark:border-gray-700/50">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-power-off text-white"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white" id="activeCount">{{ active_devices|default:0 }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Active</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass p-4 rounded-xl border border-white/20 dark:border-gray-700/50">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-pause-circle text-white"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white" id="inactiveCount">{{ inactive_devices|default:0 }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Inactive</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass p-4 rounded-xl border border-white/20 dark:border-gray-700/50">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-home text-white"></i>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_rooms|default:0 }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Rooms</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<div class="flex items-center space-x-4">
+    <!-- Search -->
+    <div class="relative">
+        <input type="text" id="deviceSearch" placeholder="Search devices..." 
+               class="w-64 pl-10 pr-4 py-2 bg-white/10 dark:bg-black/10 border border-white/20 dark:border-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent backdrop-blur-sm">
+        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+    </div>
+    
+    <!-- View Toggle -->
+    <div class="flex items-center bg-white/10 dark:bg-black/10 backdrop-blur-sm rounded-lg p-1 border border-white/20 dark:border-gray-700/50">
+        <button class="view-btn active px-3 py-2 rounded-md transition-all duration-200" data-view="grid" title="Grid View">
+            <i class="fas fa-th"></i>
+        </button>
+        <button class="view-btn px-3 py-2 rounded-md transition-all duration-200" data-view="table" title="Table View">
+            <i class="fas fa-list"></i>
+        </button>
+    </div>
+    
+    <!-- Add Device Button -->
+    <button id="addDeviceBtn" class="btn-primary px-4 py-2 rounded-lg text-white font-medium">
+        <i class="fas fa-plus mr-2"></i>Add Device
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
+    <!-- Add Device Form Sidebar -->
+    <aside class="xl:col-span-1">
+        <div id="addDeviceForm" class="glass p-6 rounded-xl border border-white/20 dark:border-gray-700/50 sticky top-24 transform transition-all duration-300">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                    <i class="fas fa-plus-circle text-primary-500"></i>
+                    <span>Add New Device</span>
+                </h3>
+                <button id="closeFormBtn" class="xl:hidden p-2 hover:bg-white/10 dark:hover:bg-black/10 rounded-lg transition-colors">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+            
+            <form method="post" class="space-y-4" id="deviceForm">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-tag mr-2 text-primary-500"></i>Device Name
+                    </label>
+                    <input type="text" id="{{ form.name.id_for_label }}" name="{{ form.name.name }}" 
+                           class="form-input w-full px-4 py-3 bg-white/50 dark:bg-black/20 border border-white/30 dark:border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent backdrop-blur-sm transition-all duration-200"
+                           placeholder="Enter device name" value="{{ form.name.value|default:'' }}">
+                    {% if form.name.errors %}
+                        {% for error in form.name.errors %}
+                        <p class="text-red-500 text-sm mt-1 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-map-marker-alt mr-2 text-primary-500"></i>Location
+                    </label>
+                    <input type="text" id="{{ form.location.id_for_label }}" name="{{ form.location.name }}" 
+                           class="form-input w-full px-4 py-3 bg-white/50 dark:bg-black/20 border border-white/30 dark:border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent backdrop-blur-sm transition-all duration-200"
+                           placeholder="Enter device location" value="{{ form.location.value|default:'' }}">
+                    {% if form.location.errors %}
+                        {% for error in form.location.errors %}
+                        <p class="text-red-500 text-sm mt-1 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.room.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-home mr-2 text-primary-500"></i>Room
+                    </label>
+                    <select id="{{ form.room.id_for_label }}" name="{{ form.room.name }}" 
+                            class="form-input w-full px-4 py-3 bg-white/50 dark:bg-black/20 border border-white/30 dark:border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent backdrop-blur-sm transition-all duration-200">
+                        <option value="">Select a room</option>
+                        {% for room in form.room.field.queryset %}
+                        <option value="{{ room.id }}" {% if form.room.value == room.id|stringformat:"s" %}selected{% endif %}>{{ room.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.room.errors %}
+                        {% for error in form.room.errors %}
+                        <p class="text-red-500 text-sm mt-1 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.user.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-user mr-2 text-primary-500"></i>User
+                    </label>
+                    <select id="{{ form.user.id_for_label }}" name="{{ form.user.name }}" 
+                            class="form-input w-full px-4 py-3 bg-white/50 dark:bg-black/20 border border-white/30 dark:border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent backdrop-blur-sm transition-all duration-200">
+                        <option value="">Select a user</option>
+                        {% for user in form.user.field.queryset %}
+                        <option value="{{ user.id }}" {% if form.user.value == user.id|stringformat:"s" %}selected{% endif %}>{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.user.errors %}
+                        {% for error in form.user.errors %}
+                        <p class="text-red-500 text-sm mt-1 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full btn-primary px-4 py-3 rounded-lg text-white font-medium flex items-center justify-center space-x-2 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200">
+                        <i class="fas fa-plus"></i>
+                        <span>Add Device</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="xl:col-span-3">
+        <div class="glass rounded-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
+            
+            <!-- Devices Content -->
+            <div class="p-6">
+                {% if appliances %}
+                    <!-- Grid View -->
+                    <div class="devices-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="gridView">
+                        {% for device in appliances %}
+                        <div class="device-card glass p-5 rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-primary-500/50 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02]">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ device.name }}</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center mt-1">
+                                        <i class="fas fa-map-marker-alt mr-1.5"></i>
+                                        {{ device.location }}
+                                    </p>
+                                </div>
+                                
+                                <!-- Status Toggle -->
+                                <button class="status-toggle flex items-center" data-device-id="{{ device.id }}" data-status="{{ device.status|yesno:'on,off' }}" type="button">
+                                    <span class="status-toggle-bg rounded-full w-12 h-6 flex items-center px-1 transition-all duration-200 {% if device.status %}bg-green-500{% else %}bg-gray-300 dark:bg-gray-600{% endif %}">
+                                        <span class="status-toggle-handle w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 {% if device.status %}translate-x-6{% endif %}"></span>
+                                    </span>
+                                </button>
+                            </div>
+                            
+                            <!-- Device Info -->
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div class="bg-white/20 dark:bg-black/20 p-3 rounded-lg">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Room</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white mt-1">{{ device.room.name|default:"N/A" }}</p>
+                                </div>
+                                <div class="bg-white/20 dark:bg-black/20 p-3 rounded-lg">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">User</p>
+                                    <p class="font-semibold text-gray-900 dark:text-white mt-1">{{ device.user.username|default:"N/A" }}</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Status Badge -->
+                            <div class="mb-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {% if device.status %}bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300{% else %}bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                                    <i class="fas {% if device.status %}fa-power-off{% else %}fa-circle{% endif %} mr-1.5"></i>
+                                    {{ device.status|yesno:'ONLINE,OFFLINE' }}
+                                </span>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="flex gap-2">
+                                <a href="{% url 'appliance_edit' device.id %}" 
+                                   class="flex-1 text-center py-2 px-3 text-sm font-medium bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1">
+                                    <i class="fas fa-edit"></i>
+                                    <span>Edit</span>
+                                </a>
+                                <a href="{% url 'appliance_delete' device.id %}" 
+                                   class="flex-1 text-center py-2 px-3 text-sm font-medium bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/50 dark:hover:bg-red-900/80 dark:text-red-300 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1">
+                                    <i class="fas fa-trash"></i>
+                                    <span>Delete</span>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Table View -->
+                    <div id="tableView" class="hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-500 dark:text-gray-400 uppercase bg-white/20 dark:bg-black/20">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-4 font-semibold rounded-l-lg">Device</th>
+                                        <th scope="col" class="px-6 py-4 font-semibold">Status</th>
+                                        <th scope="col" class="px-6 py-4 font-semibold">Room</th>
+                                        <th scope="col" class="px-6 py-4 font-semibold">Location</th>
+                                        <th scope="col" class="px-6 py-4 font-semibold">User</th>
+                                        <th scope="col" class="px-6 py-4 font-semibold rounded-r-lg">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/20 dark:divide-gray-700/50">
+                                    {% for device in appliances %}
+                                    <tr class="hover:bg-white/10 dark:hover:bg-black/10 transition-colors">
+                                        <td class="px-6 py-4 font-semibold text-gray-900 dark:text-white">{{ device.name }}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if device.status %}bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300{% else %}bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                                                <i class="fas {% if device.status %}fa-power-off{% else %}fa-circle{% endif %} mr-1"></i>
+                                                {{ device.status|yesno:'ON,OFF' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ device.room.name|default:"N/A" }}</td>
+                                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ device.location }}</td>
+                                        <td class="px-6 py-4 text-gray-700 dark:text-gray-300">{{ device.user.username|default:"N/A" }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center space-x-3">
+                                                <a href="{% url 'appliance_edit' device.id %}" 
+                                                   class="text-primary-600 dark:text-primary-400 hover:underline font-medium">Edit</a>
+                                                <a href="{% url 'appliance_delete' device.id %}" 
+                                                   class="text-red-600 dark:text-red-400 hover:underline font-medium">Delete</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="text-center py-16">
+                        <div class="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-robot text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Devices Found</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">Get started by adding your first smart device using the form on the left.</p>
+                        <button onclick="document.getElementById('{{ form.name.id_for_label }}').focus()" 
+                                class="btn-primary px-6 py-3 rounded-lg text-white font-medium inline-flex items-center space-x-2">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Your First Device</span>
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</div>
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/device.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/device.js' %}"></script>
+{% endblock %}{% endblock %}

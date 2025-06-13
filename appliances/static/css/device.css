@@ -1,0 +1,94 @@
+/* Device Manager Styles */
+
+/* View Toggle Buttons */
+.view-btn.active {
+    background-color: rgba(244, 234, 234, 0.1);
+    color: rgb(59, 130, 246);
+}
+
+.view-btn:hover {
+    background-color: rgba(140, 255, 9, 0.1);
+}
+
+.dark .view-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Status Toggle */
+.status-toggle:hover .status-toggle-bg {
+    transform: scale(1.05);
+}
+
+/* Device Card */
+.device-card:hover {
+    transform: translateY(20px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 100;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Form Inputs */
+.form-input {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.dark .form-input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(107, 114, 128, 0.5);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: transparent;
+    box-shadow: 0 0 0 2px rgb(59, 130, 246, 0.5);
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.dark .glass {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background-color: rgb(59, 130, 246);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: rgb(37, 99, 235);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Additional device-specific styles */
+.device-card {
+    transition: all 0.3s ease;
+}
+
+.status-toggle-bg {
+    transition: all 0.2s ease;
+}
+
+.status-toggle-handle {
+    transition: transform 0.2s ease;
+}
+

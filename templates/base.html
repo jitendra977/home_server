@@ -1,38 +1,313 @@
-<!-- project_name/templates/base.html -->
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
+
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Smart Home{% endblock %}</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #1e1e2f;
-            font-family: "Segoe UI", sans-serif;
-            color: white;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Smart Device Manager{% endblock %}</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              950: '#172554',
+            },
+            gray: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.6s ease-out',
+            'slide-in': 'slideIn 0.4s ease-out',
+            'bounce-gentle': 'bounceGentle 1s ease-in-out',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            slideIn: {
+              '0%': { opacity: '0', transform: 'translateX(-10px)' },
+              '100%': { opacity: '1', transform: 'translateX(0)' }
+            },
+            bounceGentle: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-5px)' }
+            }
+          }
         }
-        header {
-            background-color: #282c34;
-            padding: 1rem;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        .content {
-            padding: 2rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
+      }
+    };
+  </script>
+
+  <!-- Project-wide CSS -->
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+
+  <!-- App-specific CSS -->
+  {% block extra_css %}{% endblock %}
+
+  {% block extra_styles %}{% endblock %}
 </head>
-<body>
-    <header>
-        🏠 Smart Home Dashboard
-    </header>
-    <div class="content">
-        {% block content %}{% endblock %}
+
+<body class="animated-bg min-h-screen text-gray-800 dark:text-gray-200 transition-colors duration-300">
+  <!-- Navigation -->
+  <nav class="glass sticky top-0 z-50 border-b">
+    <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3">
+          <div
+            class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center animate-bounce-gentle">
+            <i class="fas fa-robot text-white text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+              Smart Device Manager
+            </h1>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="{% url 'appliance_list' %}"
+            class="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">
+            <i class="fas fa-home mr-2"></i>Devices
+          </a>
+          <a href="#"
+            class="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">
+            <i class="fas fa-chart-bar mr-2"></i>Analytics
+          </a>
+          <a href="#"
+            class="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">
+            <i class="fas fa-cog mr-2"></i>Settings
+          </a>
+        </div>
+
+        <!-- Right Section -->
+        <div class="flex items-center space-x-4">
+          <!-- Theme Toggle -->
+          <button id="themeToggle"
+            class="p-2 rounded-lg glass hover:bg-white/20 dark:hover:bg-black/20 transition-all duration-200">
+            <i id="themeIcon" class="fas fa-sun text-yellow-500 text-lg"></i>
+          </button>
+
+          <!-- User Menu -->
+          {% if user.is_authenticated %}
+          <div class="relative" id="userDropdown">
+            <button id="userMenuButton"
+              class="flex items-center space-x-3 p-2 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 status-online">
+              <div
+                class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
+                <span class="text-white text-sm font-semibold">{{ user.username|first|upper }}</span>
+              </div>
+              <span class="hidden sm:block text-sm font-medium text-black dark:text-white">{{ user.username }}</span>
+              <i class="fas fa-chevron-down text-xs text-black dark:text-white"></i>
+            </button>
+
+            <div id="userDropdownMenu"
+              class="dropdown-menu absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
+              <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <p class="font-semibold text-gray-900 dark:text-white">{{ user.username }}</p>
+                {% if user.email %}
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ user.email }}</p>
+                {% endif %}
+              </div>
+              <div class="p-2">
+                <a href="#"
+                  class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <i class="fas fa-user-circle text-gray-400"></i>
+                  <span class="text-black dark:text-white">Profile</span>
+                </a>
+                <a href="#"
+                  class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <i class="fas fa-bell text-gray-400"></i>
+                  <span class="text-black dark:text-white">Notifications</span>
+                </a>
+                <a href="#"
+                  class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <i class="fas fa-cog text-gray-400"></i>
+                  <span class="text-black dark:text-white">Settings</span>
+                </a>
+                <hr class="my-2 border-gray-200 dark:border-gray-700">
+                <form method="POST" action="{% url 'logout' %}">
+                  {% csrf_token %}
+                  <button type="submit"
+                    class="flex items-center space-x-3 p-3 rounded-lg hover:bg-red-100 dark:hover:bg-red-900 transition-colors w-full text-left text-red-600 dark:text-red-400">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <a href="{% url 'login' %}" class="btn-primary px-4 py-2 rounded-lg text-white font-medium">
+            <i class="fas fa-sign-in-alt mr-2"></i>Login
+          </a>
+          {% endif %}
+
+          <!-- Mobile Menu Toggle -->
+          <button id="mobileMenuToggle" class="md:hidden p-2 rounded-lg  hover:bg-white/20 dark:hover:bg-black/20">
+            <i class="fas fa-bars text-lg"></i>
+          </button>
+        </div>
+      </div>
     </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobileMenu" class="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm hidden">
+    <div class="absolute top-16 right-0 w-64 h-full  border-l border-white/20 dark:border-gray-700/50">
+      <div class="p-4 space-y-2">
+        <a href="{% url 'appliance_list' %}"
+          class="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors">
+          <i class="fas fa-home text-primary-500"></i>
+          <span>Devices</span>
+        </a>
+        <a href="#"
+          class="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors">
+          <i class="fas fa-chart-bar text-primary-500"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="#"
+          class="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/10 dark:hover:bg-black/10 transition-colors">
+          <i class="fas fa-cog text-primary-500"></i>
+          <span>Settings</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <div class="animate-fade-in">
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {% block page_title %}Dashboard{% endblock %}
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400">
+            {% block page_subtitle %}
+            {% if user.is_authenticated %}
+            Welcome back, {{ user.username }}. Manage your smart home devices with ease.
+            {% else %}
+            Please login to manage your smart devices.
+            {% endif %}
+            {% endblock %}
+          </p>
+        </div>
+        {% block header_actions %}{% endblock %}
+      </div>
+      {% block header_stats %}{% endblock %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-8 space-y-3">
+      {% for message in messages %}
+      <div class="alert-message flex items-center space-x-3 p-4 rounded-xl glass border-l-4 animate-slide-in
+                {% if message.tags == 'success' %}
+                    border-green-500 bg-green-50/50 dark:bg-green-900/20 text-green-800 dark:text-green-200
+                {% elif message.tags == 'error' %}
+                    border-red-500 bg-red-50/50 dark:bg-red-900/20 text-red-800 dark:text-red-200
+                {% elif message.tags == 'warning' %}
+                    border-yellow-500 bg-yellow-50/50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200
+                {% else %}
+                    border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200
+                {% endif %}">
+        <i class="fas 
+                    {% if message.tags == 'success' %}fa-check-circle
+                    {% elif message.tags == 'error' %}fa-exclamation-triangle
+                    {% elif message.tags == 'warning' %}fa-exclamation-circle
+                    {% else %}fa-info-circle
+                    {% endif %} text-lg"></i>
+        <span class="font-medium flex-1">{{ message }}</span>
+        <button onclick="this.parentElement.remove()"
+          class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded transition-colors">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Page Content -->
+    <div class="animate-fade-in">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="glass border-t border-white/20 dark:border-gray-700/50 mt-16">
+    <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="flex items-center space-x-3 mb-4 md:mb-0">
+          <div
+            class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
+            <i class="fas fa-robot text-white text-sm"></i>
+          </div>
+          <span class="text-sm text-gray-600 dark:text-gray-400">
+            © 2024 Smart Device Manager. All rights reserved.
+          </span>
+        </div>
+        <div class="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
+          <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Privacy</a>
+          <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Terms</a>
+          <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Support</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Project-wide JS -->
+  <script src="{% static 'js/theme.js' %}"></script>
+  <script src="{% static 'js/dropdowns.js' %}"></script>
+  <script src="{% static 'js/messages.js' %}"></script>
+
+  <!-- App-specific JS -->
+  {% block extra_js %}{% endblock %}
 </body>
+
 </html>
