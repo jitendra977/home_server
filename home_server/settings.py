@@ -89,21 +89,10 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/appliances/devices/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
-MESSAGE_TAGS = {
-    messages.DEBUG: 'info',
-    messages.INFO: 'info',
-    messages.SUCCESS: 'success',
-    messages.WARNING: 'warning',
-    messages.ERROR: 'error',
-}
-
-# Add these settings for messages
-MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 SESSION_COOKIE_AGE = 3600  # 1 hour
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
 
 SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = TrueX_FRAME_OPTIONS = 'DENY'
