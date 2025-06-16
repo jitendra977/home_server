@@ -1,0 +1,22 @@
+/* Test styles to verify CSS loading */
+.test-border {
+    border: 3px solid red;
+    padding: 20px;
+    margin: 10px;
+}
+
+.test-background {
+    background-color: yellow;
+    color: blue;
+    font-weight: bold;
+}
+
+.test-animation {
+    transition: all 0.3s ease;
+}
+
+.test-animation:hover {
+    transform: scale(1.1);
+    background-color: green;
+    color: white;
+}

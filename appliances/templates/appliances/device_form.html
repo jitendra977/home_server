@@ -1,5 +1,60 @@
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save</button>
-</form>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="form-container p-6">
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Device Name -->
+        <div class="form-group">
+            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Device Name
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Room Selection -->
+        <div class="form-group">
+            <label for="{{ form.room.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Room
+            </label>
+            {{ form.room }}
+            {% if form.room.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.room.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- User Assignment -->
+        <div class="form-group">
+            <label for="{{ form.user.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Assigned User
+            </label>
+            {{ form.user }}
+            {% if form.user.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.user.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+            <label class="inline-flex items-center">
+                {{ form.status }}
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Active</span>
+            </label>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+            <button type="button" class="btn-secondary" onclick="window.history.back()">Cancel</button>
+            <button type="submit" class="btn-primary">Save Device</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module" src="{% static 'js/main.js' %}"></script>
+{% endblock %}

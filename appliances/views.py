@@ -13,26 +13,21 @@ def home_page(request):
 
 @login_required
 def appliance_list(request):
-    appliances = Appliance.objects.all()  # सबै डिभा1इस ल्याउने
-    form = ApplianceForm(request.POST or None)  # Form data लिने
-
-    if request.method == 'POST':  # Form सबमिट भएमा
-        if form.is_valid():  # डाटा ठिक भएमा
-            form.save()  # नयाँ डिभाइस save गर्ने
-            messages.success(request, 'Device added successfully!')
-            return redirect('appliance_list')  # फेरी लिस्ट पेजमा फर्किने
-        else:
-            messages.error(request, 'Please correct the errors below.')
-
+    appliances = Appliance.objects.all()
+    
+    # Get rooms that have at least one device
+    rooms_with_devices = Room.objects.filter(appliances__isnull=False).distinct()
+    
+    # Get rooms that have at least one active device
+    active_rooms = Room.objects.filter(appliances__status=True).distinct()
+    
     context = {
-        'form': form,
-        'total_room': Room.objects.count(),
         'appliances': appliances,
         'total_devices': appliances.count(),
-        'total_rooms': Room.objects.count(),
-        'rooms_with_devices': Room.objects.annotate(
-            device_count=Count('appliances')  
-        ).filter(device_count__gt=0).count(),
+        'active_devices': appliances.filter(status=True).count(),
+        'inactive_devices': appliances.filter(status=False).count(),
+        'total_rooms': rooms_with_devices.count(),  # Only count rooms with devices
+        'active_rooms': active_rooms.count(),
     }
     return render(request, 'appliances/device_list.html', context)  # Template र context पठाउने
 @login_required
@@ -51,4 +46,16 @@ def appliance_delete(request, pk):
         appliance.delete()
         return redirect('appliance_list')
     return render(request, 'appliances/device_confirm_delete.html', {'appliance': appliance})
+
+@login_required
+def device_new(request):
+    if request.method == "POST":
+        form = ApplianceForm(request.POST)  # Change DeviceForm to ApplianceForm
+        if form.is_valid():
+            device = form.save()
+            messages.success(request, 'Device added successfully!')
+            return redirect('device_list')
+    else:
+        form = ApplianceForm()  # Change DeviceForm to ApplianceForm
+    return render(request, 'appliances/device_form.html', {'form': form})
 

@@ -1,6 +1,6 @@
-<p>Are you sure you want to delete: <strong>{{ appliance.name }}</strong>?</p>
 <form method="post">
   {% csrf_token %}
-  <button type="submit">Yes, Delete</button>
-  <a href="{% url 'appliance_list' %}">Cancel</a>
+  <p>Are you sure you want to delete: <strong>{{ appliance.name }}</strong>?</p>
+  <button type="submit" class="btn btn-danger">Yes, Delete</button>
+  <a href="{% url 'appliance_list' %}" class="btn btn-secondary">Cancel</a>
 </form>
