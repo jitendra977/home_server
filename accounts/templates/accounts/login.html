@@ -72,10 +72,24 @@
                         </button>
                     </form>
 
-                    <div class="text-center">
-                        <small class="text-muted">
-                            Demo: admin / admin123
-                        </small>
+                    <!-- Add Register Link Section -->
+                    <div class="mt-6 text-center space-y-4">
+                        <div class="relative">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-white/10 dark:border-gray-700/50"></div>
+                            </div>
+                            <div class="relative flex justify-center">
+                                <span class="px-4 text-sm text-gray-500 dark:text-gray-400 bg-white/50 dark:bg-gray-900/50 glass">
+                                    New to Smart Device Manager?
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <a href="{% url 'accounts:register' %}" 
+                           class="w-full inline-flex items-center justify-center px-4 py-2 border border-white/20 dark:border-gray-700/50 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/10 dark:hover:bg-black/20 transition-colors duration-200">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Create an account
+                        </a>
                     </div>
                 </div>
             </div>

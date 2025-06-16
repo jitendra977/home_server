@@ -7,7 +7,7 @@
 {% block page_subtitle %}Monitor and control all your connected smart devices{% endblock %}
 
 {% block header_stats %}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in">
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 animate-fade-in">
     <div class="glass p-4 rounded-xl border border-white/20 dark:border-gray-700/50">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -47,11 +47,14 @@
     <div class="glass p-4 rounded-xl border border-white/20 dark:border-gray-700/50">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <i class="fas fa-home text-white"></i>
+                <i class="fas fa-door-open text-white"></i>
             </div>
             <div>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ total_rooms|default:0 }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Rooms</p>
+                <div class="flex items-baseline space-x-2">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ rooms_with_devices|default:0 }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">/ {{ total_rooms|default:0 }}</p>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Active Rooms</p>
             </div>
         </div>
     </div>
@@ -314,5 +317,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/device.js' %}"></script>
+<script type="module" src="{% static 'js/main.js' %}"></script>
 {% endblock %}{% endblock %}

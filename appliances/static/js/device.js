@@ -34,78 +34,102 @@ function initializeStatusToggles() {
     const statusToggles = document.querySelectorAll('.status-toggle');
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        return;
+    }
+
     statusToggles.forEach(toggle => {
         toggle.addEventListener('click', async function(e) {
             e.preventDefault();
             
             const deviceId = this.dataset.deviceId;
+            if (!deviceId) {
+                console.error('Device ID not found');
+                return;
+            }
+
             const isCurrentlyOn = this.dataset.status === 'on';
             const newStatus = isCurrentlyOn ? 'off' : 'on';
             
-            // UI elements
+            // Cache UI elements
             const bg = this.querySelector('.status-toggle-bg');
             const handle = this.querySelector('.status-toggle-handle');
-            const statusBadge = this.closest('.device-card')?.querySelector('.inline-flex') || 
-                               this.closest('tr')?.querySelector('.inline-flex');
+            
+            // Find status badge - search in both grid and table views
+            const deviceCard = this.closest('.device-card');
+            const tableRow = this.closest('tr');
+            const statusBadge = deviceCard ? 
+                deviceCard.querySelector('.status-badge') : 
+                tableRow ? tableRow.querySelector('.status-badge') : null;
+            
+            // Show loading state
+            if (handle) {
+                handle.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i>';
+            }
             
             try {
-                // Send status update to server
-                const response = await fetch(`/appliances/toggle/${deviceId}/`, {
+                const response = await fetch(`/control/toggle/${deviceId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken,
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ status: newStatus === 'on' })
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ 
+                        status: newStatus === 'on',
+                        device_id: deviceId 
+                    })
                 });
 
-                if (!response.ok) throw new Error('Failed to update status');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-                // Update UI only after successful server update
-                this.dataset.status = newStatus;
+                const data = await response.json();
                 
-                // Update toggle button
-                if (newStatus === 'on') {
-                    bg.classList.remove('bg-gray-300', 'dark:bg-gray-600');
-                    bg.classList.add('bg-green-500');
-                    handle.classList.add('translate-x-6');
-                } else {
-                    bg.classList.remove('bg-green-500');
-                    bg.classList.add('bg-gray-300', 'dark:bg-gray-600');
-                    handle.classList.remove('translate-x-6');
-                }
-
-                // Update status badge
-                if (statusBadge) {
-                    const icon = statusBadge.querySelector('i');
-                    const text = statusBadge.querySelector('span') || statusBadge.lastChild;
+                if (data.success) {
+                    // Update toggle state
+                    this.dataset.status = newStatus;
                     
-                    if (newStatus === 'on') {
-                        statusBadge.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-300');
-                        statusBadge.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900/50', 'dark:text-green-300');
-                        icon.classList.remove('fa-circle');
-                        icon.classList.add('fa-power-off');
-                        text.textContent = 'ON';
-                    } else {
-                        statusBadge.classList.remove('bg-green-100', 'text-green-800', 'dark:bg-green-900/50', 'dark:text-green-300');
-                        statusBadge.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-300');
-                        icon.classList.remove('fa-power-off');
-                        icon.classList.add('fa-circle');
-                        text.textContent = 'OFF';
+                    // Update toggle appearance
+                    if (bg && handle) {
+                        if (newStatus === 'on') {
+                            bg.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+                            bg.classList.add('bg-green-500');
+                            handle.classList.add('translate-x-6');
+                        } else {
+                            bg.classList.remove('bg-green-500');
+                            bg.classList.add('bg-gray-300', 'dark:bg-gray-600');
+                            handle.classList.remove('translate-x-6');
+                        }
+                        handle.innerHTML = ''; // Clear loading spinner
                     }
+
+                    // Update status badge if it exists
+                    if (statusBadge) {
+                        updateStatusBadge(statusBadge, newStatus);
+                    }
+
+                    // Update device counts
+                    updateDeviceCounts();
+                } else {
+                    throw new Error(data.error || 'Failed to update device status');
                 }
-
-                // Update device counts
-                updateDeviceCounts();
-
             } catch (error) {
                 console.error('Error toggling device status:', error);
-                // Revert UI changes if server update fails
-                alert('Failed to update device status. Please try again.');
+                // Revert toggle state
+                this.dataset.status = isCurrentlyOn ? 'on' : 'off';
+                if (handle) handle.innerHTML = '';
+                
+                // Show error notification
+                showErrorNotification(error.message);
             }
         });
     });
 
+    // Initialize device counts
     updateDeviceCounts();
 }
 
@@ -188,4 +212,48 @@ function initializeAnimations() {
         card.style.animationDelay = `${index * 0.1}s`;
         card.classList.add('animate-fade-in');
     });
+}
+
+// Helper function to update status badge
+function updateStatusBadge(badge, status) {
+    if (!badge) return;
+    
+    const icon = badge.querySelector('i');
+    const text = badge.querySelector('span') || badge.lastChild;
+    
+    if (status === 'on') {
+        badge.classList.remove('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-300');
+        badge.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900/50', 'dark:text-green-300');
+        if (icon) {
+            icon.classList.remove('fa-circle');
+            icon.classList.add('fa-power-off');
+        }
+        if (text) text.textContent = 'ONLINE';
+    } else {
+        badge.classList.remove('bg-green-100', 'text-green-800', 'dark:bg-green-900/50', 'dark:text-green-300');
+        badge.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-300');
+        if (icon) {
+            icon.classList.remove('fa-power-off');
+            icon.classList.add('fa-circle');
+        }
+        if (text) text.textContent = 'OFFLINE';
+    }
+}
+
+// Helper function to show error notifications
+function showErrorNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
+    notification.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('animate-fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
