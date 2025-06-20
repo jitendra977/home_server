@@ -1,0 +1,176 @@
+<div id="modalBackdrop" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-40 opacity-0 invisible transition-all duration-300"></div>
+
+<div id="addDeviceModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 invisible transition-all duration-300">
+    <div class="modal-content bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg rounded-2xl border border-white/20 dark:border-gray-700/50 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform scale-95 transition-all duration-300">
+        <div class="sticky top-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-500/10 dark:to-purple-500/10 p-6 border-b border-white/20 dark:border-gray-700/50 backdrop-blur-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-plus text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Add New Device</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Connect a new smart device to your home</p>
+                    </div>
+                </div>
+                <button id="closeModalBtn" class="p-3 hover:bg-white/20 dark:hover:bg-black/20 rounded-xl transition-all duration-200 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <form method="post" action="{% url 'device_new' %}" class="space-y-6" id="deviceForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-tag text-blue-500"></i>
+                            <span>Device Name</span>
+                            <span class="text-red-500">*</span>
+                        </div>
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="{{ form.name.id_for_label }}" name="{{ form.name.name }}"
+                               class="form-input w-full px-4 py-4 bg-white/70 dark:bg-black/30 border-2 border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 backdrop-blur-sm transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                               placeholder="Enter a descriptive name for your device" value="{{ form.name.value|default:'' }}" required>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-microchip text-gray-400"></i>
+                        </div>
+                    </div>
+                    {% if form.name.errors %}
+                        {% for error in form.name.errors %}
+                        <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.location.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-map-marker-alt text-green-500"></i>
+                            <span>Location</span>
+                            <span class="text-red-500">*</span>
+                        </div>
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="{{ form.location.id_for_label }}" name="{{ form.location.name }}"
+                               class="form-input w-full px-4 py-4 bg-white/70 dark:bg-black/30 border-2 border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 dark:focus:border-green-400 backdrop-blur-sm transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                               placeholder="e.g., Kitchen Counter, Living Room Corner" value="{{ form.location.value|default:'' }}" required>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                            <i class="fas fa-location-dot text-gray-400"></i>
+                        </div>
+                    </div>
+                    {% if form.location.errors %}
+                        {% for error in form.location.errors %}
+                        <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label for="{{ form.room.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-home text-purple-500"></i>
+                                <span>Room</span>
+                            </div>
+                        </label>
+                        <div class="relative">
+                            <select id="{{ form.room.id_for_label }}" name="{{ form.room.name }}"
+                                    class="form-input w-full px-4 py-4 bg-white/70 dark:bg-black/30 border-2 border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 dark:focus:border-purple-400 backdrop-blur-sm transition-all duration-200 text-gray-900 dark:text-white appearance-none cursor-pointer">
+                                <option value="">Select a room</option>
+                                {% for room in form.room.field.queryset %}
+                                <option value="{{ room.id }}" {% if form.room.value == room.id|stringformat:"s" %}selected{% endif %}>{{ room.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% if form.room.errors %}
+                            {% for error in form.room.errors %}
+                            <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                                <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                            </p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.user.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-user text-orange-500"></i>
+                                <span>Assign to User</span>
+                            </div>
+                        </label>
+                        <div class="relative">
+                            <select id="{{ form.user.id_for_label }}" name="{{ form.user.name }}"
+                                    class="form-input w-full px-4 py-4 bg-white/70 dark:bg-black/30 border-2 border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 dark:focus:border-orange-400 backdrop-blur-sm transition-all duration-200 text-gray-900 dark:text-white appearance-none cursor-pointer">
+                                <option value="">Select a user</option>
+                                {% for user in form.user.field.queryset %}
+                                <option value="{{ user.id }}" {% if form.user.value == user.id|stringformat:"s" %}selected{% endif %}>{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% if form.user.errors %}
+                            {% for error in form.user.errors %}
+                            <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                                <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                            </p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.device_type.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-cube text-indigo-500"></i>
+                            <span>Device Type</span>
+                            <span class="text-red-500">*</span>
+                        </div>
+                    </label>
+                    <div class="relative">
+                        <select id="{{ form.device_type.id_for_label }}" name="{{ form.device_type.name }}"
+                                class="form-input w-full px-4 py-4 bg-white/70 dark:bg-black/30 border-2 border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-400 backdrop-blur-sm transition-all duration-200 text-gray-900 dark:text-white appearance-none cursor-pointer" required>
+                            <option value="">Select a device type</option>
+                            {% for value, label in form.device_type.field.choices %}
+                                <option value="{{ value }}" {% if form.device_type.value == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </div>
+                    </div>
+                    {% if form.device_type.errors %}
+                        {% for error in form.device_type.errors %}
+                        <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
+                    <button type="button" id="cancelBtn" class="flex-1 px-6 py-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2">
+                        <i class="fas fa-times"></i>
+                        <span>Cancel</span>
+                    </button>
+                    <button type="submit" class="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-lg transform hover:scale-[1.02]">
+                        <i class="fas fa-plus"></i>
+                        <span>Add Device</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
