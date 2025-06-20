@@ -49,3 +49,41 @@ export function initializeModal() {
         }
     });
 }
+
+export function initializeFormDropdowns() {
+    // Initialize room dropdown
+    const roomSelect = document.querySelector('#id_room');
+    if (roomSelect) {
+        // Create and populate room options
+        fetch('/appliances/api/rooms/')
+            .then(response => response.json())
+            .then(data => {
+                roomSelect.innerHTML = '<option value="">Select a room</option>';
+                data.rooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = room.name;
+                    roomSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error loading rooms:', error));
+    }
+
+    // Initialize user dropdown
+    const userSelect = document.querySelector('#id_user');
+    if (userSelect) {
+        // Create and populate user options
+        fetch('/appliances/api/users/')
+            .then(response => response.json())
+            .then(data => {
+                userSelect.innerHTML = '<option value="">Select a user</option>';
+                data.users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.username;
+                    userSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error loading users:', error));
+    }
+}

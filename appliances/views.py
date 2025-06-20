@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 import json
 from django.db.models import Count
+from django.contrib.auth import get_user_model
 
 def home_page(request):
     return render(request, 'appliances/home.html')  
@@ -58,4 +59,17 @@ def device_new(request):
     else:
         form = ApplianceForm()  # Change DeviceForm to ApplianceForm
     return render(request, 'appliances/device_form.html', {'form': form})
+
+def get_rooms(request):
+    rooms = Room.objects.all()
+    return JsonResponse({
+        'rooms': [{'id': room.id, 'name': room.name} for room in rooms]
+    })
+
+def get_users(request):
+    User = get_user_model()
+    users = User.objects.all()
+    return JsonResponse({
+        'users': [{'id': user.id, 'username': user.username} for user in users]
+    })
 
