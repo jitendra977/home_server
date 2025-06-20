@@ -3,13 +3,12 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
-from django.conf import settings
 from .forms import LoginForm, RegisterForm, ProfileForm
 
 @never_cache
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect(settings.LOGIN_REDIRECT_URL)
+        return redirect('appliance_list')
     
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -19,25 +18,24 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user:
                 login(request, user)
-                next_url = request.GET.get('next', settings.LOGIN_REDIRECT_URL)
+                next_url = request.GET.get('next', 'appliance_list')
                 return redirect(next_url)
             messages.error(request, 'Invalid username or password.')
     else:
         form = LoginForm()
     
     return render(request, 'accounts/login.html', {'form': form})
-
 @login_required
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
         messages.success(request, 'You have been logged out successfully.')
-    return redirect(settings.LOGOUT_REDIRECT_URL)
+    return redirect('accounts:login')
 
 @never_cache
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect(settings.LOGIN_REDIRECT_URL)
+        return redirect('appliance_list')
     
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -45,7 +43,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Account created successfully! Welcome to Smart Device Manager.')
-            return redirect(settings.LOGIN_REDIRECT_URL)
+            return redirect('appliance_list')
     else:
         form = RegisterForm()
     
@@ -58,7 +56,7 @@ def profile_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Profile updated successfully!')
-            return redirect(settings.LOGIN_REDIRECT_URL)
+            return redirect('accounts:profile')
     else:
         form = ProfileForm(instance=request.user)
     

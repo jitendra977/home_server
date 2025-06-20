@@ -81,9 +81,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'home_server/static'),
     os.path.join(BASE_DIR, 'appliances/static'),
+    os.path.join(BASE_DIR, 'static'),  # Add this if you have a global static folder
 ]
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Add this for modern JavaScript
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 # Authentication settings
 LOGIN_URL = '/accounts/login/'

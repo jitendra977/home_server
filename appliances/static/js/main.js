@@ -1,17 +1,22 @@
-import { initializeModal } from './deviceForm.js';
-import { initializeViewToggle } from './viewToggle.js';
-import { initializeStatusToggles } from './statusToggle.js';
-import { initializeSearch } from './searchDevices.js';
-import { initializeAnimations } from './animations.js';
-import { initializeFormElements } from './form.js';
+// js/main.js
+import { initModal } from './initModal.js';
+import { initViewToggle } from './viewToggle.js';
+import { initStatusToggles } from './statusToggle.js';
+import { initSearch } from './searchDevices.js';
+import { initDeviceForm } from './deviceForm.js';
+import { showNotification } from './helpers/showErrorNotification.js';
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize form elements first
-    initializeFormElements();
+    initModal();
+    initViewToggle();
+    initStatusToggles();
+    initSearch();
+    initDeviceForm();
     
-    initializeModal();
-    initializeViewToggle();
-    initializeStatusToggles();
-    initializeSearch();
-    initializeAnimations();
+    // Escape key to close modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('addDeviceModal').classList.contains('modal-open')) {
+            closeModal();
+        }
+    });
 });

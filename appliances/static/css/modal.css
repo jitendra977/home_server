@@ -1,38 +1,21 @@
-.modal-open {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: scale(1) !important;
+/* In device.css or modal.css */
+.toggle-label {
+    transition: background-color 0.2s ease-in-out;
 }
-
-#addDeviceModal {
-    display: flex !important;
+.toggle-dot {
+    transform: translateX(0);
+    transition: transform 0.2s ease-in-out;
 }
-
-#addDeviceModal:not(.modal-open) {
-    pointer-events: none;
+input[type="checkbox"]:checked + .toggle-label {
+    background-color: #4CAF50; /* Green for active */
 }
-
-.modal-content {
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
+input[type="checkbox"]:checked + .toggle-label .toggle-dot {
+    transform: translateX(18px); /* Move dot to the right */
 }
-
-#modalBackdrop:not(.modal-open) {
-    pointer-events: none;
-}
-
-/* Add animation for modal */
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.modal-content {
-    animation: modalFadeIn 0.3s ease-out;
+/* Hide the default checkbox input */
+input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }

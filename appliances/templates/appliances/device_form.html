@@ -1,60 +1,257 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Smart Device Manager - Edit Device{% endblock %}
+
+{% block page_title %}Edit Device{% endblock %}
+
+{% block page_subtitle %}Update details for {{ form.instance.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modal.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="form-container p-6">
-    <form method="post" class="space-y-6">
-        {% csrf_token %}
-        
-        <!-- Device Name -->
-        <div class="form-group">
-            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Device Name
-            </label>
-            {{ form.name }}
-            {% if form.name.errors %}
-                <p class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</p>
-            {% endif %}
+<div class="w-full flex justify-center p-4">
+    <div class="glass modal-content rounded-2xl border border-white/20 dark:border-gray-700/50 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300">
+        <div class="sticky top-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-500/10 dark:to-purple-500/10 p-6 border-b border-white/20 dark:border-gray-700/50 backdrop-blur-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-edit text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Edit Device Details</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Modify the settings for {{ form.instance.name }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Room Selection -->
-        <div class="form-group">
-            <label for="{{ form.room.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Room
-            </label>
-            {{ form.room }}
-            {% if form.room.errors %}
-                <p class="text-red-500 text-sm mt-1">{{ form.room.errors.0 }}</p>
-            {% endif %}
-        </div>
+        <div class="p-8">
+            <form method="post" class="space-y-6" id="editDeviceForm">
+                {% csrf_token %}
 
-        <!-- User Assignment -->
-        <div class="form-group">
-            <label for="{{ form.user.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Assigned User
-            </label>
-            {{ form.user }}
-            {% if form.user.errors %}
-                <p class="text-red-500 text-sm mt-1">{{ form.user.errors.0 }}</p>
-            {% endif %}
-        </div>
+                {% if form.non_field_errors %}
+                    <div class="error-message text-red-500 p-4 mb-4 rounded-lg bg-red-50 dark:bg-red-900/20">
+                        {% for error in form.non_field_errors %}
+                        <p><i class="fas fa-exclamation-circle mr-2"></i>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-        <!-- Status -->
-        <div class="form-group">
-            <label class="inline-flex items-center">
-                {{ form.status }}
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Active</span>
-            </label>
-        </div>
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-tag text-blue-500"></i>
+                            <span>Device Name</span>
+                            <span class="text-red-500">*</span>
+                        </div>
+                    </label>
+                    <div class="relative">
+                        {{ form.name }}
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                            <i class="fas fa-microchip text-gray-400"></i>
+                        </div>
+                    </div>
+                    {% if form.name.errors %}
+                        {% for error in form.name.errors %}
+                        <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
 
-        <div class="flex justify-end space-x-3">
-            <button type="button" class="btn-secondary" onclick="window.history.back()">Cancel</button>
-            <button type="submit" class="btn-primary">Save Device</button>
+                <div class="form-group">
+                    <label for="{{ form.location.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-map-marker-alt text-green-500"></i>
+                            <span>Location</span>
+                            <span class="text-red-500">*</span>
+                        </div>
+                    </label>
+                    <div class="relative">
+                        {{ form.location }}
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                            <i class="fas fa-location-dot text-gray-400"></i>
+                        </div>
+                    </div>
+                    {% if form.location.errors %}
+                        {% for error in form.location.errors %}
+                        <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label for="{{ form.room.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-home text-purple-500"></i>
+                                <span>Room</span>
+                            </div>
+                        </label>
+                        <div class="relative">
+                            {{ form.room }}
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% if form.room.errors %}
+                            {% for error in form.room.errors %}
+                            <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                                <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                            </p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.user.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-user text-orange-500"></i>
+                                <span>Assigned User</span>
+                            </div>
+                        </label>
+                        <div class="relative">
+                            {{ form.user }}
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% if form.user.errors %}
+                            {% for error in form.user.errors %}
+                            <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                                <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                            </p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.device_type.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-cube text-indigo-500"></i>
+                            <span>Device Type</span>
+                            <span class="text-red-500">*</span>
+                        </div>
+                    </label>
+                    <div class="relative">
+                        {{ form.device_type }}
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </div>
+                    </div>
+                    {% if form.device_type.errors %}
+                        {% for error in form.device_type.errors %}
+                        <p class="error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        </p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="form-group flex items-center space-x-3 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        {{ form.status }}
+                        <label for="{{ form.status.id_for_label }}" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer">
+                            <span class="toggle-dot absolute left-1 top-1 bg-white dark:bg-gray-200 w-4 h-4 rounded-full transition duration-200 ease-in"></span>
+                        </label>
+                    </div>
+                    <label for="{{ form.status.id_for_label }}" class="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+                        Device is Active
+                    </label>
+                    {% if form.status.errors %}
+                        <p class="error-message text-red-500 text-sm mt-1">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
+                    <button type="button" onclick="window.history.back()" class="flex-1 px-6 py-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2">
+                        <i class="fas fa-times"></i>
+                        <span>Cancel</span>
+                    </button>
+                    <button type="submit" class="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-lg transform hover:scale-[1.02]">
+                        <i class="fas fa-save"></i>
+                        <span>Save Changes</span>
+                    </button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script type="module" src="{% static 'js/main.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('editDeviceForm');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const submitButton = this.querySelector('button[type="submit"]');
+                const originalButtonContent = submitButton.innerHTML;
+                
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest', // Important for Django's is_ajax
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                        body: new FormData(this)
+                    });
+
+                    const data = await response.json();
+
+                    // Clear previous errors
+                    document.querySelectorAll('.error-message').forEach(el => el.remove());
+                    document.querySelectorAll('.form-input.border-red-500').forEach(el => el.classList.remove('border-red-500'));
+
+                    if (response.ok) {
+                        window.location.href = "{% url 'appliance_list' %}?status=success&message=Device updated successfully!";
+                    } else {
+                        // Display field-specific errors
+                        for (const field in data.errors) {
+                            const inputElement = document.getElementById(data.errors[field].id);
+                            if (inputElement) {
+                                inputElement.classList.add('border-red-500');
+                                const errorP = document.createElement('p');
+                                errorP.className = 'error-message text-red-500 text-sm mt-2 flex items-center bg-red-50 dark:bg-red-900/20 p-2 rounded-lg';
+                                errorP.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${data.errors[field].message}`;
+                                inputElement.parentNode.insertBefore(errorP, inputElement.nextSibling);
+                            }
+                        }
+                        // Display non-field errors if any
+                        if (data.non_field_errors) {
+                             const nonFieldErrorsContainer = document.createElement('div');
+                             nonFieldErrorsContainer.className = 'error-message text-red-500 p-4 mb-4 rounded-lg bg-red-50 dark:bg-red-900/20';
+                             data.non_field_errors.forEach(error => {
+                                 const errorP = document.createElement('p');
+                                 errorP.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${error}`;
+                                 nonFieldErrorsContainer.appendChild(errorP);
+                             });
+                             form.prepend(nonFieldErrorsContainer);
+                        }
+                        // Optionally, add a general notification here
+                        // showNotification('Please correct the errors in the form.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    // showNotification('An unexpected error occurred.', 'error');
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonContent;
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
