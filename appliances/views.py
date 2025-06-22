@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 import json
-from django.db.models import Count
+from django.db.models import Count, Q
 from functools import wraps
 
 def home_page(request):
@@ -25,13 +25,23 @@ def superuser_required(function):
 
 @login_required
 def appliance_list(request):
-    appliances = Appliance.objects.all()
-    
-    # Get rooms that have at least one device
-    rooms_with_devices = Room.objects.filter(appliances__isnull=False).distinct()
-    
-    # Get rooms that have at least one active device
-    active_rooms = Room.objects.filter(appliances__status=True).distinct()
+    # For superusers, show all devices
+    if request.user.is_superuser:
+        appliances = Appliance.objects.all()
+        rooms_with_devices = Room.objects.filter(appliances__isnull=False).distinct()
+        active_rooms = Room.objects.filter(appliances__status=True).distinct()
+    else:
+        # For regular users, show:
+        # 1. Devices in their owned rooms
+        # 2. Devices assigned to them personally (if any)
+        user_rooms = Room.objects.filter(owner=request.user)
+        appliances = Appliance.objects.filter(
+            Q(room__in=user_rooms) | 
+            Q(user=request.user)
+        ).distinct()
+        
+        rooms_with_devices = user_rooms.filter(appliances__isnull=False).distinct()
+        active_rooms = user_rooms.filter(appliances__status=True).distinct()
     
     context = {
         'appliances': appliances,
@@ -40,10 +50,10 @@ def appliance_list(request):
         'inactive_devices': appliances.filter(status=False).count(),
         'total_rooms': rooms_with_devices.count(),
         'active_rooms': active_rooms.count(),
-        'form': ApplianceForm()  # Add empty form to context for the modal
+        'form': ApplianceForm(user=request.user),
+        'is_superuser': request.user.is_superuser,
     }
     return render(request, 'appliances/device_list.html', context)
-
 @login_required
 @superuser_required
 def appliance_edit(request, pk):
@@ -71,55 +81,77 @@ def appliance_delete(request, pk):
 @login_required
 @superuser_required
 def device_new(request):
-    # This block handles both initial GET request and POST request for form submission
     if request.method == 'POST':
-        form = ApplianceForm(request.POST)
+        form = ApplianceForm(request.POST, user=request.user)  # Pass user to form
         if form.is_valid():
             appliance = form.save()
+            
+            # Handle AJAX response
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True, 'message': 'Device added successfully!'})
-            return redirect('appliance_list') # Fallback for non-AJAX submission
-        else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                # Prepare errors for JSON response
-                errors = {}
-                for field, field_errors in form.errors.items():
-                    # For non_field_errors, field will be '__all__'
-                    if field == '__all__':
-                        errors['non_field_errors'] = [str(e) for e in field_errors]
-                    else:
-                        errors[field] = {
-                            'message': str(field_errors.as_text()), # Get the error message
-                            'id': form[field].id_for_label # Get the ID for the corresponding input field
-                        }
-                return JsonResponse({'success': False, 'errors': errors}, status=400) # Send 400 Bad Request status
-            # Fallback for non-AJAX submission with errors
-            # If not AJAX, you'd typically re-render the template with the form and its errors
-            # return render(request, 'your_template_name.html', {'form': form})
-            # Or in your case, you might reload the main device list page with the modal showing errors
-            return render(request, 'appliance_list.html', {'form': form, 'show_modal_with_errors': True}) # Pass form and flag
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'Device added successfully!',
+                    'device': {
+                        'id': appliance.id,
+                        'name': appliance.name,
+                        'type': appliance.get_device_type_display(),
+                        'status': appliance.status
+                    }
+                })
+            
+            messages.success(request, 'Device added successfully!')
+            return redirect('appliance_list')
+        
+        # Form is invalid
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            errors = {
+                field: {
+                    'message': error.as_text(),
+                    'id': form[field].id_for_label
+                } 
+                for field, error in form.errors.items()
+            }
+            return JsonResponse({
+                'success': False, 
+                'errors': errors,
+                'message': 'Please correct the errors below.'
+            }, status=400)
+        
+        # Non-AJAX form submission with errors
+        messages.error(request, 'Please correct the errors below.')
+        return render(request, 'appliances/device_list.html', {
+            'form': form,
+            'show_modal': True,
+            **get_device_stats_context()  # Include stats for page reload
+        })
 
-    else: # GET request
-        form = ApplianceForm()
-
-    # This context is for the initial load of the device list page
-    # You'll need to ensure 'appliances', 'total_devices', etc. are available here
-    # This might require fetching them from your models
-    appliances = Appliance.objects.all() # Example
-    total_devices = Appliance.objects.count()
-    active_devices = Appliance.objects.filter(status=True).count()
-    inactive_devices = total_devices - active_devices
-    total_rooms = Room.objects.count()
-    active_rooms = Room.objects.filter(appliance__status=True).distinct().count() # Example logic for active rooms
-
-    context = {
+    # GET request - initialize form
+    form = ApplianceForm(user=request.user)
+    
+    # For AJAX GET requests (e.g., loading modal content)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'modal_html': render_to_string('appliances/partials/add_device_modal.html', {
+                'form': form
+            }, request=request)
+        })
+    
+    # Regular GET request - show full page
+    return render(request, 'appliances/device_list.html', {
         'form': form,
+        **get_device_stats_context()
+    })
+
+def get_device_stats_context():
+    """Helper function to get device statistics for the context"""
+    appliances = Appliance.objects.all()
+    rooms = Room.objects.all()
+    
+    return {
         'appliances': appliances,
-        'total_devices': total_devices,
-        'active_devices': active_devices,
-        'inactive_devices': inactive_devices,
-        'total_rooms': total_rooms,
-        'active_rooms': active_rooms,
+        'total_devices': appliances.count(),
+        'active_devices': appliances.filter(status=True).count(),
+        'inactive_devices': appliances.filter(status=False).count(),
+        'total_rooms': rooms.count(),
+        'active_rooms': rooms.filter(appliances__status=True).distinct().count(),
     }
-    # If using a Class-Based View, this logic would be in form_valid and form_invalid methods.
-    return render(request, 'appliance_list.html', context)

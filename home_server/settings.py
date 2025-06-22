@@ -87,6 +87,13 @@ STATICFILES_DIRS = [
 # Add this for modern JavaScript
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
+
+# This is the base URL where media files will be accessed in the browser
+MEDIA_URL = '/media/'
+
+# This is the folder where uploaded files will be stored (outside the app)
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Authentication settings
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/appliances/devices/'

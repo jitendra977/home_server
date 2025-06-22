@@ -43,6 +43,6 @@ class ApplianceAdmin(admin.ModelAdmin):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('name', 'floor', 'owner', 'created_at')
+    list_display = ('name', 'floor', 'owner', 'created_at','image')
     search_fields = ('name', 'floor')
     list_filter = ('floor', 'owner')

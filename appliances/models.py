@@ -6,7 +6,7 @@ class Room(models.Model):
     name = models.CharField(max_length=100)
     floor = models.CharField(max_length=50, blank=True, null=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rooms', null=True, blank=True)
-    image = models.ImageField(upload_to='room_images/', blank=True, null=True)
+    image = models.ImageField(upload_to='appliances/room_images/', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)  # ADD THIS LINE ✅
 
