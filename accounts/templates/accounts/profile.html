@@ -4,78 +4,422 @@
 {% block title %}Profile - Smart Device Manager{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-2xl mx-auto">
-        <div class="glass p-8 rounded-2xl border border-white/20 dark:border-gray-700/50">
-            <!-- Profile Header -->
-            <div class="flex items-center space-x-4 mb-8">
-                <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
-                    <span class="text-2xl font-bold text-white">{{ user.username|first|upper }}</span>
+<div class="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-violet-900/20">
+    <!-- Animated Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-violet-400/20 to-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-pink-400/20 to-violet-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    </div>
+
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <div class="inline-flex items-center space-x-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-full px-6 py-3 mb-6 shadow-lg">
+                <div class="w-2 h-2 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full animate-pulse"></div>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">PROFILE SETTINGS</span>
+            </div>
+            <h1 class="text-5xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+                Your Profile
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 text-lg max-w-md mx-auto">
+                Customize your identity and manage your account preferences
+            </p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                
+                <!-- Profile Card -->
+                <div class="xl:col-span-4">
+                    <div class="sticky top-8">
+                        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50 dark:border-gray-700/50">
+                            <!-- Profile Image -->
+                            <div class="text-center mb-8">
+                                <div class="relative inline-block group">
+                                    {% if user.profile.image %}
+                                        <div class="relative">
+                                            <img src="{{ user.profile.image.url }}" 
+                                                 alt="Profile" 
+                                                 class="w-36 h-36 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl group-hover:scale-105 transition-transform duration-300">
+                                            <div class="absolute inset-0 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        </div>
+                                    {% else %}
+                                        <div class="w-36 h-36 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
+                                            <span class="text-5xl font-bold text-white">{{ user.username|first|upper }}</span>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- Status Badge -->
+                                    <div class="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full border-4 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
+                                        <i class="fas fa-check text-white text-lg"></i>
+                                    </div>
+                                </div>
+                                
+                                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mt-6 mb-2">
+                                    {{ user.get_full_name|default:user.username }}
+                                </h2>
+                                <p class="text-violet-600 dark:text-violet-400 font-medium">
+                                    {{ user.email }}
+                                </p>
+                            </div>
+
+                            <!-- Profile Stats -->
+                            <div class="space-y-4">
+                                <div class="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-2xl p-4 border border-violet-200/50 dark:border-violet-700/50">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-calendar-alt text-white text-sm"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">Member since</p>
+                                                <p class="font-semibold text-gray-900 dark:text-white">{{ user.date_joined|date:"M Y" }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gradient-to-r from-pink-50 to-violet-50 dark:from-pink-900/20 dark:to-violet-900/20 rounded-2xl p-4 border border-pink-200/50 dark:border-pink-700/50">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-violet-500 rounded-xl flex items-center justify-center">
+                                                <i class="fas fa-clock text-white text-sm"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">Last active</p>
+                                                <p class="font-semibold text-gray-900 dark:text-white">{{ user.last_login|date:"M d" }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
+                                <div class="flex space-x-3">
+                                    <button class="flex-1 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                        <i class="fas fa-key mr-2"></i>
+                                        Security
+                                    </button>
+                                    <button class="flex-1 bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-3 px-4 rounded-xl hover:bg-white dark:hover:bg-gray-700 transition-all duration-200">
+                                        <i class="fas fa-cog mr-2"></i>
+                                        Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
-                    <p class="text-gray-600 dark:text-gray-400">Manage your account information</p>
+
+                <!-- Form Section -->
+                <div class="xl:col-span-8">
+                    <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 dark:border-gray-700/50 overflow-hidden">
+                        
+                        <!-- Flash Messages -->
+                        {% if messages %}
+                            {% for message in messages %}
+                            <div class="mx-8 mt-8 p-4 rounded-2xl {% if message.tags == 'success' %}bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 text-emerald-800 dark:from-emerald-900/20 dark:to-teal-900/20 dark:border-emerald-700 dark:text-emerald-400{% else %}bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 dark:from-red-900/20 dark:to-pink-900/20 dark:border-red-700 dark:text-red-400{% endif %}">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br {% if message.tags == 'success' %}from-emerald-500 to-teal-500{% else %}from-red-500 to-pink-500{% endif %} rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-{% if message.tags == 'success' %}check{% else %}exclamation{% endif %} text-white text-sm"></i>
+                                    </div>
+                                    <span class="font-medium">{{ message }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <form method="post" enctype="multipart/form-data" class="p-8">
+                            {% csrf_token %}
+
+                            <!-- Profile Image Section -->
+                            <div class="mb-10">
+                                <div class="flex items-center space-x-4 mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-image text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Profile Picture</h3>
+                                        <p class="text-gray-600 dark:text-gray-400">Upload a photo to personalize your account</p>
+                                    </div>
+                                </div>
+
+                                {% if user.profile.image %}
+                                    <!-- Current Image Display and Remove Option -->
+                                    <div class="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/10 dark:to-purple-900/10 rounded-2xl p-6 mb-6 border border-violet-200/50 dark:border-violet-700/50">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <span class="text-sm font-semibold text-violet-700 dark:text-violet-400 uppercase tracking-wide">Current Image</span>
+                                            <div class="flex items-center space-x-4">
+                                                <button type="button" 
+                                                        onclick="document.getElementById('image-modal').classList.remove('hidden')"
+                                                        class="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 font-medium text-sm transition-colors">
+                                                    <i class="fas fa-expand-alt mr-1"></i>Preview
+                                                </button>
+                                                {# This checkbox is what Django's ClearableFileInput expects for clearing #}
+                                                <label for="{{ profile_form.image.id_for_label }}-clear" class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 font-medium text-sm cursor-pointer transition-colors">
+                                                    <input type="checkbox" name="{{ profile_form.image.html_name }}-clear" id="{{ profile_form.image.id_for_label }}-clear" class="sr-only">
+                                                    <i class="fas fa-trash mr-1"></i>Remove
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-4">
+                                            <img src="{{ user.profile.image.url }}" 
+                                                 alt="Current profile" 
+                                                 class="w-20 h-20 rounded-2xl object-cover border-2 border-white dark:border-gray-800 shadow-lg">
+                                            <div>
+                                                <p class="text-gray-700 dark:text-gray-300 font-medium">{{ user.profile.image.name|slice:"15:" }}</p>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Click remove to delete, or upload new image below</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {# Image Modal for preview #}
+                                    <div id="image-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+                                        <div class="relative max-w-3xl max-h-full bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-2xl">
+                                            <div class="relative">
+                                                <img src="{{ user.profile.image.url }}" 
+                                                     alt="Profile preview" 
+                                                     class="max-w-full max-h-[80vh] object-contain">
+                                                <button type="button" 
+                                                        onclick="document.getElementById('image-modal').classList.add('hidden')"
+                                                        class="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-colors">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Upload Section -->
+                                <div class="space-y-4">
+                                    <label for="{{ profile_form.image.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                                        {% if user.profile.image %}Upload New{% else %}Upload Image{% endif %}
+                                    </label>
+                                    <div class="border-2 border-dashed border-violet-300 dark:border-violet-700 rounded-2xl p-8 text-center hover:border-violet-400 dark:hover:border-violet-600 transition-colors">
+                                        {# Renders the file input for image upload #}
+                                        {{ profile_form.image }}
+                                        <div class="mt-4">
+                                            <i class="fas fa-cloud-upload-alt text-3xl text-violet-400 mb-2"></i>
+                                            <p class="text-gray-600 dark:text-gray-400">
+                                                <span class="font-medium">Click to upload</span> or drag and drop
+                                            </p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                                                JPG, PNG or GIF up to 2MB
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {% if profile_form.image.errors %}
+                                        <p class="text-red-500 dark:text-red-400 text-sm flex items-center">
+                                            <i class="fas fa-exclamation-circle mr-2"></i>
+                                            {{ profile_form.image.errors.0 }}
+                                        </p>
+                                    {% endif %}
+                                    {% if profile_form.image.help_text %}
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ profile_form.image.help_text }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Personal Information -->
+                            <div class="mb-10">
+                                <div class="flex items-center space-x-4 mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-violet-500 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Personal Details</h3>
+                                        <p class="text-gray-600 dark:text-gray-400">Your name and personal information</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-3">
+                                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                                            {{ form.first_name.label }}
+                                        </label>
+                                        <div class="relative group">
+                                            {{ form.first_name }}
+                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <i class="fas fa-user text-gray-400 group-focus-within:text-violet-500 transition-colors"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.first_name.help_text %}
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ form.first_name.help_text }}</p>
+                                        {% endif %}
+                                        {% if form.first_name.errors %}
+                                            <p class="text-red-500 dark:text-red-400 text-sm flex items-center mt-1">
+                                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                                {{ form.first_name.errors.0 }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="space-y-3">
+                                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                                            {{ form.last_name.label }}
+                                        </label>
+                                        <div class="relative group">
+                                            {{ form.last_name }}
+                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <i class="fas fa-user text-gray-400 group-focus-within:text-violet-500 transition-colors"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.last_name.help_text %}
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ form.last_name.help_text }}</p>
+                                        {% endif %}
+                                        {% if form.last_name.errors %}
+                                            <p class="text-red-500 dark:text-red-400 text-sm flex items-center mt-1">
+                                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                                {{ form.last_name.errors.0 }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Information -->
+                            <div class="mb-10">
+                                <div class="flex items-center space-x-4 mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-at text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Account Info</h3>
+                                        <p class="text-gray-600 dark:text-gray-400">Your login credentials and contact details</p>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-6">
+                                    <div class="space-y-3">
+                                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                                            {{ form.username.label }}
+                                        </label>
+                                        <div class="relative group">
+                                            {{ form.username }}
+                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <i class="fas fa-at text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.username.help_text %}
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ form.username.help_text }}</p>
+                                        {% endif %}
+                                        {% if form.username.errors %}
+                                            <p class="text-red-500 dark:text-red-400 text-sm flex items-center mt-1">
+                                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                                {{ form.username.errors.0 }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="space-y-3">
+                                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                                            {{ form.email.label }}
+                                        </label>
+                                        <div class="relative group">
+                                            {{ form.email }}
+                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <i class="fas fa-envelope text-gray-400 group-focus-within:text-emerald-500 transition-colors"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.email.help_text %}
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ form.email.help_text }}</p>
+                                        {% endif %}
+                                        {% if form.email.errors %}
+                                            <p class="text-red-500 dark:text-red-400 text-sm flex items-center mt-1">
+                                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                                {{ form.email.errors.0 }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col sm:flex-row gap-4 pt-8 border-t border-gray-200/50 dark:border-gray-700/50">
+                                <button type="submit" class="flex-1 bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 hover:from-violet-700 hover:via-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 flex items-center justify-center">
+                                    <i class="fas fa-save mr-3"></i>
+                                    Save Changes
+                                </button>
+                                <button type="button" class="flex-1 bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold py-4 px-8 rounded-2xl hover:bg-white dark:hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center">
+                                    <i class="fas fa-undo mr-3"></i>
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-
-            <!-- Profile Form -->
-            <form method="post" class="space-y-6">
-                {% csrf_token %}
-                
-                {% if messages %}
-                    {% for message in messages %}
-                    <div class="{% if message.tags == 'success' %}bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400{% else %}bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400{% endif %} px-4 py-3 rounded-lg">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                {% endif %}
-
-                <!-- Username -->
-                <div>
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <i class="fas fa-user mr-2"></i>Username
-                    </label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.username.errors.0 }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Email -->
-                <div>
-                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <i class="fas fa-envelope mr-2"></i>Email
-                    </label>
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ form.email.errors.0 }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Name Fields -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fas fa-user mr-2"></i>First Name
-                        </label>
-                        {{ form.first_name }}
-                    </div>
-                    <div>
-                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fas fa-user mr-2"></i>Last Name
-                        </label>
-                        {{ form.last_name }}
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="flex justify-end">
-                    <button type="submit" class="btn-primary px-6 py-2 rounded-lg text-white font-medium flex items-center">
-                        <i class="fas fa-save mr-2"></i>Save Changes
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
+
+<style>
+/* Modern Form Styling */
+input[type="text"], input[type="email"] {
+    /* Increased padding-left to 3.5rem (pl-14) and added !important to override potential conflicting styles. */
+    /* Also added !important to pr-4, py-4, and rounded-2xl for consistent styling enforcement. */
+    @apply w-full pl-14! pr-4! py-4! bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm
+           border-2 border-gray-200 dark:border-gray-700 rounded-2xl!
+           focus:border-transparent focus:ring-4 focus:ring-violet-500/30 dark:focus:ring-violet-400/30
+           text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400
+           transition-all duration-300 shadow-lg focus:shadow-xl;
+}
+
+input[type="file"] {
+    /* Style for the file input itself */
+    @apply w-full p-4 bg-transparent border-0 text-gray-700 dark:text-gray-300
+           file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 
+           file:text-sm file:font-bold file:bg-gradient-to-r file:from-violet-500 file:to-purple-500
+           file:text-white hover:file:from-violet-600 hover:file:to-purple-600
+           file:transition-all file:duration-200 file:shadow-lg hover:file:shadow-xl;
+}
+
+/* Specific styles to hide default ClearableFileInput text if needed */
+/* If ClearableFileInput renders "Currently: ..." and you only want your custom UI, you might need to target and hide it. */
+/* Example:
+.form-field-with-image .clearablefileinput-current {
+    display: none;
+}
+.form-field-with-image .clearablefileinput-clear-checkbox {
+    display: none; // If you moved the checkbox to a custom location
+}
+*/
+
+/* Glass Effect */
+.glass-effect {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+/* Animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Hover Effects */
+.hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Focus States */
+.focus-within\:ring-violet-500\/30:focus-within {
+    --tw-ring-color: rgb(139 92 246 / 0.3);
+}
+
+/* Gradient Animations */
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+}
+</style>
 {% endblock %}
