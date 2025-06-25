@@ -5,3 +5,7 @@ __pycache__/
 .env
 .DS_Store
 /media/
+# Ignore Django migration files
+*/migrations/
+*/migrations/*.py
+*/migrations/*.pyc

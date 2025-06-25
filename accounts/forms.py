@@ -1,32 +1,45 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from accounts.models import Profile
 
+# --------------------
+# Login Form
+# --------------------
 class LoginForm(forms.Form):
     username = forms.CharField()
     password = forms.CharField(widget=forms.PasswordInput)
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-input w-full px-4 py-2 rounded-lg'
 
+# --------------------
+# Register Form
+# --------------------
 class RegisterForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True)
     last_name = forms.CharField(max_length=30, required=True)
     email = forms.EmailField(required=True)
-    
+
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.update({
                 'class': 'form-input w-full px-4 py-2 rounded-lg bg-white/50 dark:bg-black/20 border border-white/20 dark:border-gray-700/50'
             })
-    
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("This email address is already registered.")
+        return email
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
@@ -36,12 +49,31 @@ class RegisterForm(UserCreationForm):
             user.save()
         return user
 
+# --------------------
+# Profile Image Form
+# --------------------
 class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ('image', )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['image'].widget.attrs.update({
+            'class': 'form-input w-full px-4 py-2 rounded-lg',
+        })
+
+# --------------------
+# User Profile Update Form (Profile Page)
+# --------------------
+class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('username', 'email', 'first_name', 'last_name')
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-input w-full px-4 py-2 rounded-lg'
+            field.widget.attrs.update({
+                'class': 'form-input w-full px-4 py-2 rounded-lg',
+            })

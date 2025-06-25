@@ -9,11 +9,12 @@
         <div class="glass p-8 rounded-2xl border border-white/20 dark:border-gray-700/50 shadow-xl">
             <!-- Header -->
             <div class="text-center mb-8">
-                <!-- ...existing header code... -->
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Create Your Account</h1>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Join the Smart Device Manager platform</p>
             </div>
 
             <!-- Registration Form -->
-            <form method="POST" class="space-y-6">
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}
@@ -22,6 +23,19 @@
                             <p class="text-sm">{{ error }}</p>
                         {% endfor %}
                     </div>
+                {% endif %}
+
+                <!-- Profile Image Upload -->
+                {% if profile_form %}
+                <div class="space-y-2">
+                    <label for="id_image" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-image mr-2"></i>Profile Image (optional)
+                    </label>
+                    {{ profile_form.image }}
+                    {% if profile_form.image.errors %}
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ profile_form.image.errors.0 }}</p>
+                    {% endif %}
+                </div>
                 {% endif %}
 
                 <!-- Username Field -->
