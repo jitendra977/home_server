@@ -8,4 +8,4 @@ __pycache__/
 # Ignore Django migration files
 */migrations/
 */migrations/*.py
-*/migrations/*.pyc
+*/migrations/*.pyc  
