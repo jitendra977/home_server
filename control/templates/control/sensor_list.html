@@ -1,0 +1,86 @@
+{% extends 'control/base.html' %}
+{% block title %}Sensors - ESPHome Control{% endblock %}
+
+{% block content %}
+<h1>All Sensors</h1>
+<div class="mb-3">
+    <button class="btn btn-success" onclick="allSwitch('ON')">All ON</button>
+    <button class="btn btn-danger" onclick="allSwitch('OFF')">All OFF</button>
+</div>
+<table class="table table-striped" id="sensor-table">
+    <thead>
+        <tr>
+            <th>Device</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Value</th>
+            <th>MQTT Topic</th>
+            <th>Control</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for sensor in page_obj %}
+        <tr id="sensor-row-{{ sensor.id }}">
+            <td>{{ sensor.device.name }}</td>
+            <td>{{ sensor.name }}</td>
+            <td>{{ sensor.sensor_type }}</td>
+            <td id="sensor-value-{{ sensor.id }}">{{ sensor.formatted_value }}</td>
+            <td>
+                <code>{{ sensor.topic }}</code>
+                {% if sensor.command_topic %}
+                    <br><code>{{ sensor.command_topic }}</code>
+                {% endif %}
+            </td>
+            <td>
+                {% if sensor.is_controllable %}
+                    <button class="btn btn-success btn-sm" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'ON', {{ sensor.id }})">ON</button>
+                    <button class="btn btn-danger btn-sm" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'OFF', {{ sensor.id }})">OFF</button>
+                {% else %}
+                    <span class="text-muted">N/A</span>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div>
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next &raquo;</a>
+    {% endif %}
+</div>
+
+<script>
+function sendCommand(deviceId, sensorName, command, sensorId) {
+    fetch(`/control/api/device/${deviceId}/command/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sensor_name: sensorName, command: command })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success){
+            // Optimistically update the value in the table
+            document.getElementById('sensor-value-' + sensorId).innerText = command;
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Error sending command: ' + error);
+    });
+}
+
+function allSwitch(command) {
+    {% for sensor in page_obj %}
+        {% if sensor.is_controllable %}
+            sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', command, {{ sensor.id }});
+        {% endif %}
+    {% endfor %}
+}
+</script>
+{% endblock %}

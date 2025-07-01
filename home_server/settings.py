@@ -106,3 +106,41 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = TrueX_FRAME_OPTIONS = 'DENY'
+
+
+# MQTT Configuration (if using MQTT)
+MQTT_BROKER_HOST = '192.168.0.59'
+MQTT_BROKER_PORT = 1883
+# Optionally add:
+# MQTT_USERNAME = 'your_username'
+# MQTT_PASSWORD = 'your_password'
+
+# For compatibility with code expecting MQTT_BROKER and MQTT_PORT
+MQTT_BROKER = MQTT_BROKER_HOST
+MQTT_PORT = MQTT_BROKER_PORT
+
+# ESPHome Discovery Settings
+ESPHOME_DISCOVERY = {
+    'NETWORK_RANGE': '192.168.0.59/60',  # Your network range
+    'SCAN_TIMEOUT': 5,  # Seconds to wait for device response
+    'AUTO_DISCOVERY_INTERVAL': 300,  # Seconds between auto-discovery runs
+}
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'control': {  # Replace with your app name
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}

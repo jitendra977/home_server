@@ -1,0 +1,16 @@
+<div class="col-md-4 mb-4">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">{{ device.name }}</h5>
+      <p>Status:
+        {% if device.is_online %}
+          <span class="text-success">Online</span>
+        {% else %}
+          <span class="text-danger">Offline</span>
+        {% endif %}
+      </p>
+      <p>IP: {{ device.ip_address }}</p>
+      <a href="{% url 'control:device_detail' device.id %}" class="btn btn-primary btn-sm">Details</a>
+    </div>
+  </div>
+</div>

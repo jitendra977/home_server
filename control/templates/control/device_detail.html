@@ -1,0 +1,54 @@
+{% extends 'control/base.html' %}
+{% block title %}{{ device.name }} - Device Details{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{{ device.name }} ({{ device.ip_address }})</h1>
+<p><strong>Hostname:</strong> {{ device.hostname }}</p>
+<p><strong>Version:</strong> {{ device.version }}</p>
+<p><strong>Status:</strong> {% if device.is_online %}<span class="text-success">Online</span>{% else %}<span class="text-danger">Offline</span>{% endif %}</p>
+<p><strong>WiFi Signal:</strong> {{ device.signal_strength_display }}</p>
+
+<h3 class="mt-4">Sensors & Entities</h3>
+<div class="row">
+  {% for sensor in sensors %}
+    <div class="col-md-4 mb-3">
+      <div class="card sensor-card">
+        <div class="card-body">
+          <h5 class="card-title">{{ sensor.name }}</h5>
+          <p>Type: {{ sensor.sensor_type }}</p>
+          <p>MQTT State Topic: <code>{{ sensor.topic }}</code></p>
+          {% if sensor.command_topic %}
+            <p>MQTT Command Topic: <code>{{ sensor.command_topic }}</code></p>
+          {% endif %}
+          {% if sensor.sensor_type == "switch" and sensor.is_controllable %}
+            <button class="btn btn-success btn-sm" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'ON', 'sensor-value-{{ sensor.id }}')">ON</button>
+            <button class="btn btn-danger btn-sm" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'OFF', 'sensor-value-{{ sensor.id }}')">OFF</button>
+            <span id="sensor-value-{{ sensor.id }}">Current: {{ sensor.formatted_value }}</span>
+          {% else %}
+            <span>Value: {{ sensor.formatted_value }}</span>
+          {% endif %}
+          <p>Last Updated: {{ sensor.last_updated|date:"Y-m-d H:i:s" }}</p>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12"><p class="text-muted">No sensors/entities found for this device.</p></div>
+  {% endfor %}
+</div>
+<script>
+  const deviceId = "{{ device.id }}";
+  // Example fetch command
+  fetch("{% url 'control:send_command' device.id %}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sensor_name: 'example_sensor', command: 'ON' })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Success:', data);
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+</script>
+{% endblock %}

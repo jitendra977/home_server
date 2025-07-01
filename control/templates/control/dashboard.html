@@ -1,0 +1,235 @@
+{% extends 'control/base.html' %}
+
+{% block title %}Dashboard - ESPHome Control{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_devices }}</h4>
+                        <p class="mb-0">Total Devices</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-cpu fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ online_devices }}</h4>
+                        <p class="mb-0">Online Devices</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-wifi fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ offline_devices }}</h4>
+                        <p class="mb-0">Offline Devices</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-wifi-off fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ total_sensors }}</h4>
+                        <p class="mb-0">Total Sensors</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-graph-up fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Devices -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Recent Devices
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for device in recent_devices %}
+                    <div class="d-flex align-items-center mb-3 device-card p-2 border rounded {% if device.is_online %}device-online{% else %}device-offline{% endif %}">
+                        <div class="me-3">
+                            {% if device.is_online %}
+                                <i class="bi bi-circle-fill text-success"></i>
+                            {% else %}
+                                <i class="bi bi-circle-fill text-danger"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                <a href="{% url 'control:device_detail' device.id %}" class="text-decoration-none">
+                                    {{ device.name }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">
+                                {{ device.ip_address }} | Last seen: {{ device.last_seen|timesince }} ago
+                            </small>
+                        </div>
+                        <div>
+                            {% if device.wifi_signal %}
+                                <small class="signal-strength">{{ device.signal_strength_display }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No devices found.</p>
+                {% endfor %}
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'control:device_list' %}" class="btn btn-outline-primary">
+                        View All Devices
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sensor Types -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Sensor Types
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for sensor_type in sensor_types %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-capitalize">
+                            <i class="bi bi-dot"></i> {{ sensor_type.sensor_type }}
+                        </span>
+                        <span class="badge bg-primary">{{ sensor_type.count }}</span>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No sensors found.</p>
+                {% endfor %}
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'control:sensor_list' %}" class="btn btn-outline-primary">
+                        View All Sensors
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Controls -->
+{% if controllable_sensors %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-toggles"></i> Quick Controls
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for sensor in controllable_sensors %}
+                        <div class="col-md-4 mb-3">
+                            <div class="sensor-card p-3 border rounded">
+                                <h6>{{ sensor.device.name }}</h6>
+                                <p class="mb-2">{{ sensor.name }}</p>
+                                <div>
+                                    <button class="btn btn-sm btn-success control-button"
+                                            onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'ON', 'sensor-value-{{ sensor.id }}')">
+                                        <i class="bi bi-toggle-on"></i> ON
+                                    </button>
+                                    <button class="btn btn-sm btn-danger control-button"
+                                            onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'OFF', 'sensor-value-{{ sensor.id }}')">
+                                        <i class="bi bi-toggle-off"></i> OFF
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted" id="sensor-value-{{ sensor.id }}">
+                                        Current: {{ sensor.formatted_value }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendCommand(deviceId, sensorName, command, valueElementId) {
+    fetch(`/control/api/device/${deviceId}/command/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sensor_name: sensorName, command: command })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success && valueElementId){
+            // Optimistically update the value in the UI
+            document.getElementById(valueElementId).innerText = "Current: " + command;
+        }
+        // Optionally show a toast or update UI
+        console.log('Command sent:', data);
+    })
+    .catch(error => {
+        console.error('Error sending command:', error);
+    });
+}
+
+// Auto-refresh device status every 30 seconds
+setInterval(() => {
+    fetch('/control/api/devices/status/')
+        .then(response => response.json())
+        .then(data => {
+            // Update device status indicators
+            console.log('Device status updated:', data.timestamp);
+        })
+        .catch(error => console.error('Error refreshing status:', error));
+}, 30000);
+</script>
+{% endblock %}
