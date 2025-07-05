@@ -316,8 +316,6 @@ class ESPHomeMQTTClient:
     
     def parse_entity_info(self, topic, data, device):
         """Parse entity/sensor information from discovery data"""
-        logger.debug(f"[ENTITY DEBUG] topic: {topic}")
-        logger.debug(f"[ENTITY DEBUG] data: {json.dumps(data, indent=2)}")
         try:
             parts = topic.split('/')
             if len(parts) < 3:

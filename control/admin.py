@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ESPHomeDevice, ESPHomeSensor
+from .models import ESPHomeDevice, ESPHomeSensor  # Make sure this matches your models.py
 
 @admin.register(ESPHomeDevice)
 class ESPHomeDeviceAdmin(admin.ModelAdmin):
@@ -8,6 +8,5 @@ class ESPHomeDeviceAdmin(admin.ModelAdmin):
 
 @admin.register(ESPHomeSensor)
 class ESPHomeSensorAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sensor_type', 'device', 'last_value', 'last_updated')
-    search_fields = ('name', 'device__name')
-    list_filter = ('sensor_type',)
+    list_display = ('name', 'device', 'sensor_type', 'last_value')
+    list_filter = ('sensor_type', 'device')

@@ -148,6 +148,7 @@ def send_command(request, device_id):
             logger.error(f"Error sending command: {e}")
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
 def discover_devices(request):
     """Discover ESPHome devices on network"""
     if request.method == 'POST':
@@ -169,16 +170,13 @@ def discover_devices(request):
             updated_count = 0
             
             for device_info in devices:
-                # Pass the sensors data from the discovered device instead of empty list
-                sensors_data = device_info.get('sensors', [])
                 device, created = discovery_service.save_discovered_device(
-                    device_info, sensors_data  # Changed from [] to sensors_data
+                    device_info, []
                 )
-                if device:  # Only count if device was actually created/updated
-                    if created:
-                        created_count += 1
-                    else:
-                        updated_count += 1
+                if created:
+                    created_count += 1
+                else:
+                    updated_count += 1
             
             messages.success(
                 request, 
