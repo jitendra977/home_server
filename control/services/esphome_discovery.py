@@ -33,17 +33,30 @@ class ESPHomeDiscoveryService:
         
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=5),  # Increased timeout
-            connector=aiohttp.TCPConnector(limit=100)
+            connector=aiohttp.TCPConnector(limit=100, force_close=True)  # Added force_close
         ) as session:
             for ip in network.hosts():
-                tasks.append(self._check_esphome_device_with_semaphore(semaphore, session, str(ip)))
+                ip_str = str(ip)
+                # Skip network and broadcast addresses
+                if ip_str.endswith('.0') or ip_str.endswith('.255'):
+                    continue
+                tasks.append(self._check_esphome_device_with_semaphore(semaphore, session, ip_str))
             
             results = await asyncio.gather(*tasks, return_exceptions=True)
             
         # Filter out exceptions and None results
         devices = []
+        seen_macs = set()  # Track MACs to avoid duplicates
+        
         for result in results:
             if isinstance(result, dict) and result:
+                # Check for duplicate MAC addresses
+                mac = result.get('mac_address')
+                if mac and mac in seen_macs:
+                    logger.debug(f"Skipping duplicate device with MAC {mac}")
+                    continue
+                if mac:
+                    seen_macs.add(mac)
                 devices.append(result)
             elif isinstance(result, Exception):
                 logger.debug(f"Discovery exception: {result}")
@@ -57,15 +70,27 @@ class ESPHomeDiscoveryService:
     
     async def _check_esphome_device(self, session: aiohttp.ClientSession, ip: str) -> Optional[Dict]:
         """Check if device at IP is an ESPHome device"""
+        # Create basic device info with the IP we're checking
+        base_device_info = {
+            "ip_address": ip,
+            "ip": ip,
+            "is_online": True,
+            "last_seen": timezone.now().isoformat()
+        }
+
         try:
-            # First check if port 80 is open
-            if not await self._check_port(ip, 80):
+            # First check if port 80 is open with a short timeout
+            if not await self._check_port(ip, 80, timeout=1.0):
+                logger.debug(f"Port 80 closed on {ip}")
                 return None
             
-            # Try to get the main page
-            async with session.get(f"http://{ip}/", 
-                                 allow_redirects=True,
-                                 headers={'User-Agent': 'ESPHome-Discovery/1.0'}) as response:
+            # Try to get the main page with slightly longer timeout
+            async with session.get(
+                f"http://{ip}/",
+                allow_redirects=True,
+                headers={'User-Agent': 'ESPHome-Discovery/1.0'},
+                timeout=aiohttp.ClientTimeout(total=3.0)
+            ) as response:
                 if response.status == 200:
                     text = await response.text()
                     
@@ -79,16 +104,39 @@ class ESPHomeDiscoveryService:
                         "webserver"
                     ]
                     
-                    if any(indicator in text for indicator in esphome_indicators):
-                        logger.info(f"Found potential ESPHome device at {ip}")
-                        device_info = await self._get_device_info(session, ip, text)
-                        if device_info:
-                            return device_info
+                    if any(indicator.lower() in text.lower() for indicator in esphome_indicators):
+                        logger.info(f"Found ESPHome device at {ip}")
                         
+                        # Get detailed device info
+                        detailed_info = await self._get_device_info(session, ip, text)
+                        if detailed_info:
+                            # Merge with our base info (preserving the IP)
+                            device_info = {**base_device_info, **detailed_info}
+                            device_info['ip_address'] = ip  # Ensure IP is never overwritten
+                            device_info['ip'] = ip         # Keep both fields for compatibility
+                            
+                            # Additional validation
+                            if not device_info.get('name'):
+                                device_info['name'] = f"ESPHome_{ip.replace('.', '_')}"
+                            if not device_info.get('mac_address'):
+                                device_info['mac_address'] = await self._generate_mac_from_device(session, ip, device_info)
+                            
+                            logger.debug(f"Device info for {ip}: {device_info}")
+                            return device_info
+                        else:
+                            # Return at least the basic info if detailed parsing fails
+                            return base_device_info
+                else:
+                    logger.debug(f"HTTP {response.status} from {ip}")
+                    return None
+                    
         except asyncio.TimeoutError:
             logger.debug(f"Timeout checking {ip}")
+        except aiohttp.ClientError as e:
+            logger.debug(f"HTTP error checking {ip}: {str(e)}")
         except Exception as e:
-            logger.debug(f"Failed to check {ip}: {e}")
+            logger.debug(f"Unexpected error checking {ip}: {str(e)}", exc_info=True)
+        
         return None
     
     async def _check_port(self, ip: str, port: int, timeout: float = 2.0) -> bool:
@@ -105,12 +153,11 @@ class ESPHomeDiscoveryService:
     async def _get_device_info(self, session: aiohttp.ClientSession, ip: str, page_content: str = None) -> Optional[Dict]:
         """Extract device information from ESPHome device"""
         device_info = {
-            "ip_address": ip,
-            "ip": ip,  # Keep both for compatibility
+            "ip_address": ip,  # Primary IP field
+            "ip": ip,         # Secondary IP field for compatibility
             "is_online": True,
             "last_seen": timezone.now().isoformat()
         }
-        
         try:
             # If we don't have page content, fetch it
             if not page_content:
@@ -479,26 +526,53 @@ class ESPHomeDiscoveryService:
         try:
             device_info = device_data.get("device", device_data)
             mac_address = device_info.get("mac_address")
-            if not mac_address:
-                logger.error("No MAC address found for device, skipping.")
+            ip_address = device_info.get("ip_address", device_info.get("ip", "0.0.0.0")).strip()
+            
+            # Validate we have at least one identifier
+            if not mac_address and ip_address == "0.0.0.0":
+                logger.error("Neither valid MAC nor IP address found for device, skipping.")
                 return None, False
 
+            # Prepare device defaults - ensure IP is only set if valid
             device_defaults = {
-                "name": device_info.get("name", device_info.get("hostname", "Unknown Device")),
-                "ip_address": device_info.get("ip_address", device_info.get("ip", "")),
+                "name": device_info.get("name", device_info.get("hostname", f"ESPHome_{ip_address.replace('.', '_')}")),
                 "hostname": device_info.get("hostname", ""),
                 "version": device_info.get("version", ""),
-                "is_online": device_info.get("is_online", True),
+                "is_online": True,  # Since we just discovered it
                 "mqtt_topic_prefix": device_info.get("mqtt_topic_prefix", ""),
                 "wifi_signal": device_info.get("wifi_signal"),
                 "wifi_channel": device_info.get("wifi_channel"),
                 "last_seen": timezone.now(),
             }
+            
+            # Only include IP if it's valid
+            if ip_address != "0.0.0.0":
+                device_defaults["ip_address"] = ip_address
 
-            device, created = ESPHomeDevice.objects.update_or_create(
-                mac_address=mac_address,
-                defaults=device_defaults
-            )
+            # Try to update by MAC first if available
+            if mac_address:
+                device, created = ESPHomeDevice.objects.update_or_create(
+                    mac_address=mac_address,
+                    defaults=device_defaults
+                )
+            else:
+                # Fall back to updating by IP if valid
+                if ip_address != "0.0.0.0":
+                    device, created = ESPHomeDevice.objects.update_or_create(
+                        ip_address=ip_address,
+                        defaults=device_defaults
+                    )
+                else:
+                    # Last resort - try by name if IP is 0.0.0.0
+                    name = device_info.get("name")
+                    if name:
+                        device, created = ESPHomeDevice.objects.update_or_create(
+                            name=name,
+                            defaults=device_defaults
+                        )
+                    else:
+                        logger.error(f"No valid identifier for device: {device_info}")
+                        return None, False
             
             # Save sensors
             if not sensors_data:
@@ -531,14 +605,12 @@ class ESPHomeDiscoveryService:
                     sensors_created += 1
             
             logger.info(f"{'Created' if created else 'Updated'} device: {device.name} "
-                       f"with {len(sensors_data)} sensors ({sensors_created} new)")
+                    f"with {len(sensors_data)} sensors ({sensors_created} new)")
             return device, created
             
         except Exception as e:
-            logger.error(f"Error saving discovered device: {e}")
-            logger.exception("Full traceback:")
+            logger.error(f"Error saving discovered device: {str(e)}", exc_info=True)
             return None, False
-    
     async def discover_and_save_devices(self, network_range: str = "192.168.0.0/24") -> List[ESPHomeDevice]:
         """Discover devices and save them to database"""
         discovered_devices = await self.discover_devices_by_network_scan(network_range)

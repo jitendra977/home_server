@@ -1,61 +1,243 @@
 {% extends 'control/base.html' %}
-{% block title %}Sensors - ESPHome Control{% endblock %}
+{% block title %}Sensors by Type - ESPHome Control{% endblock %}
 
 {% block content %}
-<h1>All Sensors</h1>
-<div class="mb-3">
-    <button class="btn btn-success" onclick="allSwitch('ON')">All ON</button>
-    <button class="btn btn-danger" onclick="allSwitch('OFF')">All OFF</button>
-</div>
-<table class="table table-striped" id="sensor-table">
-    <thead>
-        <tr>
-            <th>Device</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Value</th>
-            <th>MQTT Topic</th>
-            <th>Control</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for sensor in page_obj %}
-        <tr id="sensor-row-{{ sensor.id }}">
-            <td>{{ sensor.device.name }}</td>
-            <td>{{ sensor.name }}</td>
-            <td>{{ sensor.sensor_type }}</td>
-            <td id="sensor-value-{{ sensor.id }}">{{ sensor.formatted_value }}</td>
-            <td>
-                <code>{{ sensor.topic }}</code>
-                {% if sensor.command_topic %}
-                    <br><code>{{ sensor.command_topic }}</code>
-                {% endif %}
-            </td>
-            <td>
-                {% if sensor.is_controllable %}
-                    <button class="btn btn-success btn-sm" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'ON', {{ sensor.id }})">ON</button>
-                    <button class="btn btn-danger btn-sm" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'OFF', {{ sensor.id }})">OFF</button>
-                {% else %}
-                    <span class="text-muted">N/A</span>
-                {% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+<div class="container-fluid py-4">
+    <h1 class="display-6 mb-4">Sensors by Type</h1>
 
-<div>
-    {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a>
-    {% endif %}
-    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">Next &raquo;</a>
-    {% endif %}
+    <div class="mb-4">
+        <strong>Total Sensors:</strong> {{ total_sensors }}<br>
+        <strong>Switches:</strong> {{ switches.count }},
+        <strong>Binary:</strong> {{ binary_sensors.count }},
+        <strong>Temperature:</strong> {{ temperature_sensors.count }},
+        <strong>Humidity:</strong> {{ humidity_sensors.count }},
+        <strong>Other:</strong> {{ other_sensors.count }}
+    </div>
+
+    <!-- ALL ON/OFF BUTTONS -->
+    <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-success btn-sm me-2" onclick="allSwitch('ON')">
+            <i class="bi bi-toggle-on"></i> All ON
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="allSwitch('OFF')">
+            <i class="bi bi-toggle-off"></i> All OFF
+        </button>
+    </div>
+
+    <!-- SWITCHES TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-toggle2-on"></i> Switches ({{ switches.count }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Device</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                            <th>Control</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in switches %}
+                        <tr id="sensor-row-{{ sensor.id }}">
+                            <td>{{ sensor.device.name }}</td>
+                            <td>{{ sensor.name }}</td>
+                            <td id="sensor-value-{{ sensor.id }}">
+                                <span class="badge {% if sensor.last_value == 'ON' %}bg-primary text-white{% else %}bg-secondary text-dark{% endif %}">
+                                    {{ sensor.last_value|default:"OFF" }}
+                                </span>
+                            </td>
+                            <td>{{ sensor.last_updated|date:"M j, Y, g:i a" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-success" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'ON', {{ sensor.id }})">
+                                        <i class="bi bi-power"></i> ON
+                                    </button>
+                                    <button class="btn btn-danger" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'OFF', {{ sensor.id }})">
+                                        <i class="bi bi-power"></i> OFF
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted">No switches found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- BINARY SENSORS TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-toggle-on"></i> Binary Sensors ({{ binary_sensors.count }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Device</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in binary_sensors %}
+                        <tr id="sensor-row-{{ sensor.id }}">
+                            <td>{{ sensor.device.name }}</td>
+                            <td>{{ sensor.name }}</td>
+                            <td id="sensor-value-{{ sensor.id }}">
+                                <span class="badge {% if sensor.last_value == 'ON' or sensor.last_value == 'Active' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ sensor.last_value|default:"OFF" }}
+                                </span>
+                            </td>
+                            <td>{{ sensor.last_updated|date:"M j, Y, g:i a" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">No binary sensors found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEMPERATURE SENSORS TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-thermometer"></i> Temperature Sensors ({{ temperature_sensors.count }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Device</th>
+                            <th>Name</th>
+                            <th>Value</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in temperature_sensors %}
+                        <tr id="sensor-row-{{ sensor.id }}">
+                            <td>{{ sensor.device.name }}</td>
+                            <td>{{ sensor.name }}</td>
+                            <td id="sensor-value-{{ sensor.id }}">
+                                <span class="badge bg-warning text-dark">
+                                    {% if sensor.last_value == "nan" or not sensor.last_value %}
+                                        N/A
+                                    {% else %}
+                                        {{ sensor.last_value }} °C
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ sensor.last_updated|date:"M j, Y, g:i a" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">No temperature sensors found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUMIDITY SENSORS TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-droplet"></i> Humidity Sensors ({{ humidity_sensors.count }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Device</th>
+                            <th>Name</th>
+                            <th>Value</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in humidity_sensors %}
+                        <tr id="sensor-row-{{ sensor.id }}">
+                            <td>{{ sensor.device.name }}</td>
+                            <td>{{ sensor.name }}</td>
+                            <td id="sensor-value-{{ sensor.id }}">
+                                <span class="badge bg-info">
+                                    {% if not sensor.last_value or sensor.last_value == "-" %}
+                                        N/A
+                                    {% else %}
+                                        {{ sensor.last_value }} %
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ sensor.last_updated|date:"M j, Y, g:i a" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">No humidity sensors found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTHER SENSORS TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-collection"></i> Other Sensors ({{ other_sensors.count }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Device</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in other_sensors %}
+                        <tr id="sensor-row-{{ sensor.id }}">
+                            <td>{{ sensor.device.name }}</td>
+                            <td>{{ sensor.name }}</td>
+                            <td><span class="badge bg-secondary">{{ sensor.sensor_type|default:"-" }}</span></td>
+                            <td id="sensor-value-{{ sensor.id }}">
+                                <span class="badge bg-secondary">
+                                    {{ sensor.last_value|default:"N/A" }}
+                                </span>
+                            </td>
+                            <td>{{ sensor.last_updated|date:"M j, Y, g:i a" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted">No other sensors found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
 function sendCommand(deviceId, sensorName, command, sensorId) {
+    const valueElement = document.getElementById('sensor-value-' + sensorId);
+    const spinner = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    const originalValue = valueElement.innerHTML;
+    valueElement.innerHTML = spinner;
+
     fetch(`/control/api/device/${deviceId}/command/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,22 +246,26 @@ function sendCommand(deviceId, sensorName, command, sensorId) {
     .then(response => response.json())
     .then(data => {
         if(data.success){
-            // Optimistically update the value in the table
-            document.getElementById('sensor-value-' + sensorId).innerText = command;
+            // Set blue for ON, gray for OFF
+            if(command === 'ON') {
+                valueElement.innerHTML = `<span class="badge bg-primary text-white">ON</span>`;
+            } else {
+                valueElement.innerHTML = `<span class="badge bg-secondary text-dark">OFF</span>`;
+            }
         } else {
+            valueElement.innerHTML = originalValue;
             alert('Error: ' + (data.error || 'Unknown error'));
         }
     })
     .catch(error => {
+        valueElement.innerHTML = originalValue;
         alert('Error sending command: ' + error);
     });
 }
 
 function allSwitch(command) {
-    {% for sensor in page_obj %}
-        {% if sensor.is_controllable %}
-            sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', command, {{ sensor.id }});
-        {% endif %}
+    {% for sensor in switches %}
+        sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', command, {{ sensor.id }});
     {% endfor %}
 }
 </script>

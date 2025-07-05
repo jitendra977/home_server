@@ -93,11 +93,16 @@ def device_detail(request, device_id):
             sensor_groups[sensor.sensor_type] = []
         sensor_groups[sensor.sensor_type].append(sensor)
     
+    binary_sensors = sensors.filter(sensor_type='binary')
+    other_sensors = sensors.exclude(sensor_type='binary')
+    
     context = {
         'device': device,
         'sensors': sensors,
         'sensor_groups': sensor_groups,
         'controllable_sensors': sensors.filter(is_controllable=True),
+        'binary_sensors': binary_sensors,
+        'other_sensors': other_sensors,
     }
     
     return render(request, 'control/device_detail.html', context)
@@ -143,7 +148,6 @@ def send_command(request, device_id):
             logger.error(f"Error sending command: {e}")
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
-
 def discover_devices(request):
     """Discover ESPHome devices on network"""
     if request.method == 'POST':
@@ -165,13 +169,16 @@ def discover_devices(request):
             updated_count = 0
             
             for device_info in devices:
+                # Pass the sensors data from the discovered device instead of empty list
+                sensors_data = device_info.get('sensors', [])
                 device, created = discovery_service.save_discovered_device(
-                    device_info, []
+                    device_info, sensors_data  # Changed from [] to sensors_data
                 )
-                if created:
-                    created_count += 1
-                else:
-                    updated_count += 1
+                if device:  # Only count if device was actually created/updated
+                    if created:
+                        created_count += 1
+                    else:
+                        updated_count += 1
             
             messages.success(
                 request, 
@@ -197,41 +204,26 @@ def devices_status(request):
         'devices': list(devices),
         'timestamp': timezone.now().isoformat()
     })
-
 def sensor_list(request):
-    """List all sensors"""
-    sensors = ESPHomeSensor.objects.select_related('device').all()
+    """List all sensors categorized by type"""
+    sensors = ESPHomeSensor.objects.select_related('device').all().order_by('device__name', 'name')
     
-    # Filter by sensor type
-    sensor_type = request.GET.get('type')
-    if sensor_type:
-        sensors = sensors.filter(sensor_type=sensor_type)
-    
-    # Filter by device
-    device_id = request.GET.get('device')
-    if device_id:
-        sensors = sensors.filter(device_id=device_id)
-    
-    # Search
-    search_query = request.GET.get('search')
-    if search_query:
-        sensors = sensors.filter(
-            Q(name__icontains=search_query) |
-            Q(device__name__icontains=search_query)
-        )
-    
-    # Pagination
-    paginator = Paginator(sensors, 20)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # Categorize sensors
+    switches = sensors.filter(sensor_type='switch')
+    binary_sensors = sensors.filter(sensor_type='binary')
+    temperature_sensors = sensors.filter(sensor_type='temperature')
+    humidity_sensors = sensors.filter(sensor_type='humidity')
+    other_sensors = sensors.exclude(
+        sensor_type__in=['switch', 'binary', 'temperature', 'humidity']
+    )
     
     context = {
-        'page_obj': page_obj,
-        'sensor_types': ESPHomeSensor.SENSOR_TYPES,
-        'devices': ESPHomeDevice.objects.all(),
-        'current_type': sensor_type,
-        'current_device': device_id,
-        'search_query': search_query,
+        'switches': switches,
+        'binary_sensors': binary_sensors,
+        'temperature_sensors': temperature_sensors,
+        'humidity_sensors': humidity_sensors,
+        'other_sensors': other_sensors,
+        'total_sensors': sensors.count(),
     }
     
     return render(request, 'control/sensor_list.html', context)

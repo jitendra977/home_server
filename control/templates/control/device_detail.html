@@ -1,54 +1,259 @@
 {% extends 'control/base.html' %}
-{% block title %}{{ device.name }} - Device Details{% endblock %}
+{% block title %}{{ device.name }} - Device Detail{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">{{ device.name }} ({{ device.ip_address }})</h1>
-<p><strong>Hostname:</strong> {{ device.hostname }}</p>
-<p><strong>Version:</strong> {{ device.version }}</p>
-<p><strong>Status:</strong> {% if device.is_online %}<span class="text-success">Online</span>{% else %}<span class="text-danger">Offline</span>{% endif %}</p>
-<p><strong>WiFi Signal:</strong> {{ device.signal_strength_display }}</p>
-
-<h3 class="mt-4">Sensors & Entities</h3>
-<div class="row">
-  {% for sensor in sensors %}
-    <div class="col-md-4 mb-3">
-      <div class="card sensor-card">
-        <div class="card-body">
-          <h5 class="card-title">{{ sensor.name }}</h5>
-          <p>Type: {{ sensor.sensor_type }}</p>
-          <p>MQTT State Topic: <code>{{ sensor.topic }}</code></p>
-          {% if sensor.command_topic %}
-            <p>MQTT Command Topic: <code>{{ sensor.command_topic }}</code></p>
-          {% endif %}
-          {% if sensor.sensor_type == "switch" and sensor.is_controllable %}
-            <button class="btn btn-success btn-sm" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'ON', 'sensor-value-{{ sensor.id }}')">ON</button>
-            <button class="btn btn-danger btn-sm" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'OFF', 'sensor-value-{{ sensor.id }}')">OFF</button>
-            <span id="sensor-value-{{ sensor.id }}">Current: {{ sensor.formatted_value }}</span>
-          {% else %}
-            <span>Value: {{ sensor.formatted_value }}</span>
-          {% endif %}
-          <p>Last Updated: {{ sensor.last_updated|date:"Y-m-d H:i:s" }}</p>
-        </div>
-      </div>
+<div class="container-fluid py-4">
+    <h1 class="mb-4">
+        <i class="bi bi-cpu"></i> {{ device.name }}
+        <span class="badge {% if device.is_online %}bg-success{% else %}bg-danger{% endif %} ms-2">
+            {{ device.is_online|yesno:"Online,Offline" }}
+        </span>
+    </h1>
+    <div class="mb-4">
+        <strong>IP:</strong> {{ device.ip_address }}<br>
+        <strong>MAC:</strong> {{ device.mac_address }}<br>
+        <strong>Version:</strong> {{ device.version }}<br>
+        <strong>Last Seen:</strong> {{ device.last_seen|timesince }} ago
     </div>
-  {% empty %}
-    <div class="col-12"><p class="text-muted">No sensors/entities found for this device.</p></div>
-  {% endfor %}
+
+    <!-- SWITCHES TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-toggle2-on"></i> Switches</span>
+            <div>
+                <button class="btn btn-light btn-sm" onclick="allSwitch('ON')">All ON</button>
+                <button class="btn btn-dark btn-sm" onclick="allSwitch('OFF')">All OFF</button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Location</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Topic</th>
+                            <th>Command Topic</th>
+                            <th>Control</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in sensors %}
+                            {% if sensor.sensor_type == "switch" %}
+                            <tr id="sensor-row-{{ sensor.id }}">
+                                <td>{{ sensor.device.name }}</td>
+                                <td>{{ sensor.name }}</td>
+                                <td id="sensor-value-{{ sensor.id }}">
+                                    <span class="badge {% if sensor.formatted_value == 'ON' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ sensor.formatted_value }}
+                                    </span>
+                                </td>
+                                <td><code>{{ sensor.topic }}</code></td>
+                                <td><code>{{ sensor.command_topic }}</code></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-success" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'ON', {{ sensor.id }})">
+                                            <i class="bi bi-toggle-on"></i> ON
+                                        </button>
+                                        <button class="btn btn-danger" onclick="sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', 'OFF', {{ sensor.id }})">
+                                            <i class="bi bi-toggle-off"></i> OFF
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- BINARY SENSORS TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="bi bi-toggle-on"></i> Binary Sensors
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Location</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in sensors %}
+                            {% if sensor.sensor_type == "binary" %}
+                            <tr id="sensor-row-{{ sensor.id }}">
+                                <td>{{ sensor.device.name }}</td>
+                                <td>{{ sensor.name }}</td>
+                                <td id="sensor-value-{{ sensor.id }}">
+                                    <span class="badge {% if sensor.formatted_value == 'ON' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ sensor.formatted_value }}
+                                    </span>
+                                </td>
+                                <td><code>{{ sensor.topic }}</code></td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEMPERATURE SENSORS TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <i class="bi bi-thermometer"></i> Temperature Sensors
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Location</th>
+                            <th>Name</th>
+                            <th>Value</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in sensors %}
+                            {% if sensor.sensor_type == "temperature" %}
+                            <tr id="sensor-row-{{ sensor.id }}">
+                                <td>{{ sensor.device.name }}</td>
+                                <td>{{ sensor.name }}</td>
+                                <td>
+                                    <span class="badge bg-warning text-dark">
+                                        {{ sensor.formatted_value }}
+                                    </span>
+                                </td>
+                                <td><code>{{ sensor.topic }}</code></td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUMIDITY SENSORS TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <i class="bi bi-droplet"></i> Humidity Sensors
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Location</th>
+                            <th>Name</th>
+                            <th>Value</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in sensors %}
+                            {% if sensor.sensor_type == "humidity" %}
+                            <tr id="sensor-row-{{ sensor.id }}">
+                                <td>{{ sensor.device.name }}</td>
+                                <td>{{ sensor.name }}</td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ sensor.formatted_value }}
+                                    </span>
+                                </td>
+                                <td><code>{{ sensor.topic }}</code></td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTHER SENSORS TABLE -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <i class="bi bi-collection"></i> Other Sensors
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Location</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th>Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sensor in sensors %}
+                            {% if sensor.sensor_type not in "switch,binary,temperature,humidity" %}
+                            <tr id="sensor-row-{{ sensor.id }}">
+                                <td>{{ sensor.device.name }}</td>
+                                <td>{{ sensor.name }}</td>
+                                <td><span class="badge bg-secondary">{{ sensor.sensor_type }}</span></td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        {{ sensor.formatted_value }}
+                                    </span>
+                                </td>
+                                <td><code>{{ sensor.topic }}</code></td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
+
 <script>
-  const deviceId = "{{ device.id }}";
-  // Example fetch command
-  fetch("{% url 'control:send_command' device.id %}", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sensor_name: 'example_sensor', command: 'ON' })
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Success:', data);
-  })
-  .catch((error) => {
-    console.error('Error:', error);
-  });
+function sendCommand(deviceId, sensorName, command, sensorId) {
+    const valueElement = document.getElementById('sensor-value-' + sensorId);
+    const spinner = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    const originalValue = valueElement.innerHTML;
+    valueElement.innerHTML = spinner;
+
+    fetch(`/control/api/device/${deviceId}/command/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sensor_name: sensorName, command: command })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success){
+            valueElement.innerHTML = `<span class="badge bg-${command === 'ON' ? 'success' : 'danger'}">${command}</span>`;
+        } else {
+            valueElement.innerHTML = originalValue;
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        valueElement.innerHTML = originalValue;
+        alert('Error sending command: ' + error);
+    });
+}
+
+function allSwitch(command) {
+    {% for sensor in sensors %}
+        {% if sensor.sensor_type == "switch" %}
+            sendCommand({{ sensor.device.id }}, '{{ sensor.name }}', command, {{ sensor.id }});
+        {% endif %}
+    {% endfor %}
+}
 </script>
 {% endblock %}

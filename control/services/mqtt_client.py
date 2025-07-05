@@ -224,9 +224,21 @@ class ESPHomeMQTTClient:
             hostname = device_info.get('name', topic_prefix)
             version = device_info.get('sw', device_info.get('sw_version', ''))
 
-            # Get or create device
-            device, created = ESPHomeDevice.objects.get_or_create(
-                mac_address=mac_address or f"unknown_{topic_prefix}",
+            # Normalize MAC
+            if mac_address:
+                mac_address = mac_address.lower().replace(':', '').replace('-', '')
+            else:
+                logger.warning("No MAC address found in MQTT discovery, skipping device.")
+                return
+
+            # Get existing device if any
+            existing = ESPHomeDevice.objects.filter(mac_address=mac_address).first()
+            if not ip_address or ip_address == "0.0.0.0":
+                if existing and existing.ip_address and existing.ip_address != "0.0.0.0":
+                    ip_address = existing.ip_address
+
+            device, created = ESPHomeDevice.objects.update_or_create(
+                mac_address=mac_address,
                 defaults={
                     'name': device_name or topic_prefix,
                     'ip_address': ip_address,
@@ -304,6 +316,8 @@ class ESPHomeMQTTClient:
     
     def parse_entity_info(self, topic, data, device):
         """Parse entity/sensor information from discovery data"""
+        logger.debug(f"[ENTITY DEBUG] topic: {topic}")
+        logger.debug(f"[ENTITY DEBUG] data: {json.dumps(data, indent=2)}")
         try:
             parts = topic.split('/')
             if len(parts) < 3:

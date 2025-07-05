@@ -1,16 +1,39 @@
-<div class="col-md-4 mb-4">
-  <div class="card shadow-sm">
+<div class="col-12 col-md-6 col-lg-4 mb-4">
+  <div class="card shadow-sm h-100 border-0">
     <div class="card-body">
-      <h5 class="card-title">{{ device.name }}</h5>
-      <p>Status:
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi bi-cpu fs-2 me-2 text-primary"></i>
+        <h5 class="card-title mb-0 flex-grow-1">
+          <a href="{% url 'control:device_detail' device.id %}" class="text-decoration-none text-dark">
+            {{ device.name }}
+          </a>
+        </h5>
+        <span class="badge {% if device.is_online %}bg-success{% else %}bg-danger{% endif %} ms-2">
+          {{ device.is_online|yesno:"Online,Offline" }}
+        </span>
+      </div>
+      <div class="mb-2">
+        <i class="bi bi-wifi"></i>
+        <span class="text-muted">IP:</span> {{ device.ip_address|default:"—" }}
+      </div>
+      <div class="mb-2">
+        <i class="bi bi-hash"></i>
+        <span class="text-muted">MAC:</span> {{ device.mac_address|default:"—" }}
+      </div>
+      <div class="mb-2">
+        <i class="bi bi-gear"></i>
+        <span class="text-muted">Version:</span> {{ device.version|default:"—" }}
+      </div>
+      <div>
+        <a href="{% url 'control:device_detail' device.id %}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-eye"></i> Details
+        </a>
         {% if device.is_online %}
-          <span class="text-success">Online</span>
-        {% else %}
-          <span class="text-danger">Offline</span>
+          <a href="{% url 'control:device_control' device.id %}" class="btn btn-outline-success btn-sm ms-1">
+            <i class="bi bi-lightning"></i> Control
+          </a>
         {% endif %}
-      </p>
-      <p>IP: {{ device.ip_address }}</p>
-      <a href="{% url 'control:device_detail' device.id %}" class="btn btn-primary btn-sm">Details</a>
+      </div>
     </div>
   </div>
 </div>

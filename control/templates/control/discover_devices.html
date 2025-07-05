@@ -2,18 +2,60 @@
 {% block title %}Discover Devices{% endblock %}
 
 {% block content %}
-  <h1 class="mb-4">Discover ESPHome Devices</h1>
-  <p>Click the button below to scan your network for ESPHome devices.</p>
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-primary">Start Discovery</button>
-  </form>
-  {% if discovered_devices %}
-    <h2 class="mt-5">Discovered Devices</h2>
-    <ul>
-      {% for device in discovered_devices %}
-        <li>{{ device.name }} ({{ device.ip_address }})</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h1 class="card-title mb-3"><i class="bi bi-search"></i> Discover ESPHome Devices</h1>
+                    <p class="mb-4">Click the button below to scan your network for ESPHome devices. This may take a few seconds.</p>
+                    <form method="post" class="d-flex align-items-center gap-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-broadcast"></i> Start Discovery
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if discovered_devices %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-list-ul"></i> Discovered Devices ({{ discovered_devices|length }})</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>IP Address</th>
+                                    <th>MAC Address</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in discovered_devices %}
+                                <tr>
+                                    <td>{{ device.name }}</td>
+                                    <td>{{ device.ip_address }}</td>
+                                    <td>{{ device.mac_address|default:"—" }}</td>
+                                    <td>
+                                        <span class="badge bg-success">Discovered</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% elif discovered_devices is not none %}
+            <div class="alert alert-warning mt-4">
+                No devices found on your network.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}
